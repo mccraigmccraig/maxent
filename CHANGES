@@ -1,6 +1,9 @@
 1.2.7
 _____
 
+Modified GISTrainer to use the new increment() and adjustValue()
+methods available in Trove 0.1.4 hashmaps. (Jason)
+
 Set up the GISTrainer to use an initial capacity and load factor for
 the big hashmaps it uses.  The initial capacity is half the number of
 outcomes, and the load factor is 0.9. (Jason)

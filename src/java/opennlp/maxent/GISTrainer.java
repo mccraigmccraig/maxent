@@ -31,7 +31,7 @@ import java.util.zip.*;
  * and is available at <a href ="ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z"><code>ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z</code></a>. 
  *
  * @author  Jason Baldridge
- * @version $Revision: 1.4 $, $Date: 2002/04/08 16:14:06 $
+ * @version $Revision: 1.5 $, $Date: 2002/04/09 09:15:10 $
  */
 class GISTrainer {
 
@@ -131,7 +131,7 @@ class GISTrainer {
     private TIntDoubleProcedure addParamsToPABI =
         new TIntDoubleProcedure() {
                 public boolean execute(int oid, double arg) {
-                    pabi[TID].put(oid, pabi[TID].get(oid) + arg);
+                    pabi[TID].adjustValue(oid, arg);
                     return true;
                 }
             };
@@ -179,7 +179,8 @@ class GISTrainer {
     private TIntDoubleProcedure updateCorrectionFeatureModifier =
         new TIntDoubleProcedure() {
                 public boolean execute(int oid, double arg) {
-                    CFMOD +=  arg * cfvals[TID].get(oid) * numTimesEventsSeen[TID];
+                    CFMOD +=
+			arg * cfvals[TID].get(oid) * numTimesEventsSeen[TID];
                     return true;
                 }
             };
@@ -356,9 +357,7 @@ class GISTrainer {
                     predkeys = params[PID].keys();
                     for (int i=0; i<predkeys.length; i++) {
                         OID = predkeys[i];
-                        if (cfvals[TID].containsKey(OID)) {
-                            cfvals[TID].put(OID, cfvals[TID].get(OID) + 1);
-                        } else {
+                        if (!cfvals[TID].increment(OID)) {
                             cfvals[TID].put(OID, 1);
                             pabi[TID].put(OID, 0.0);
                         }
