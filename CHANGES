@@ -1,6 +1,9 @@
 1.2.7
 _____
 
+Set up the GISTrainer to use an initial capacity and load factor for
+the big hashmaps it uses.  The initial capacity is half the number of
+outcomes, and the load factor is 0.9. (Jason)
 
 (opennlp.maxent.DataIndexer)  Do not index events with 0 active features.
 (Eric)

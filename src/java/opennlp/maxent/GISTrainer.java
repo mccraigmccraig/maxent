@@ -31,7 +31,7 @@ import java.util.zip.*;
  * and is available at <a href ="ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z"><code>ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z</code></a>. 
  *
  * @author  Jason Baldridge
- * @version $Revision: 1.3 $, $Date: 2001/12/27 19:20:26 $
+ * @version $Revision: 1.4 $, $Date: 2002/04/08 16:14:06 $
  */
 class GISTrainer {
 
@@ -305,10 +305,21 @@ class GISTrainer {
         modifiers = new TIntDoubleHashMap[numPreds];
         observedExpects = new TIntDoubleHashMap[numPreds];
 
+	int initialCapacity;
+	float loadFactor = (float)0.9;
+	if (numOutcomes < 3) {
+	    initialCapacity = 2;
+	    loadFactor = (float)1.0;
+	} else if (numOutcomes < 5) {
+	    initialCapacity = 2;
+	} else {
+	    initialCapacity = (int)numOutcomes/2;
+	}
 	for (PID=0; PID<numPreds; PID++) {
-	    params[PID] = new TIntDoubleHashMap();
-            modifiers[PID] = new TIntDoubleHashMap();
-            observedExpects[PID] = new TIntDoubleHashMap();
+	    params[PID] = new TIntDoubleHashMap(initialCapacity, loadFactor);
+            modifiers[PID] = new TIntDoubleHashMap(initialCapacity, loadFactor);
+            observedExpects[PID] =
+		new TIntDoubleHashMap(initialCapacity, loadFactor);
             for (OID=0; OID<numOutcomes; OID++) {
                 if (predCount[PID][OID] > 0) {
                     params[PID].put(OID, 0.0);
@@ -338,8 +349,8 @@ class GISTrainer {
 	
             cfvals = new TIntIntHashMap[numTokens];
             for (TID=0; TID<numTokens; TID++) {
-                cfvals[TID] = new TIntIntHashMap();
-                pabi[TID] = new TIntDoubleHashMap();
+                cfvals[TID] = new TIntIntHashMap(initialCapacity, loadFactor);
+                pabi[TID] = new TIntDoubleHashMap(initialCapacity, loadFactor);
                 for (int j=0; j<contexts[TID].length; j++) {
                     PID = contexts[TID][j];
                     predkeys = params[PID].keys();
@@ -380,7 +391,7 @@ class GISTrainer {
             // initialize just the pabi table
             pabi = new TIntDoubleHashMap[numTokens];
             for (TID=0; TID<numTokens; TID++) {
-                pabi[TID] = new TIntDoubleHashMap();
+                pabi[TID] = new TIntDoubleHashMap(initialCapacity, loadFactor);
                 for (int j=0; j<contexts[TID].length; j++) {
                     PID = contexts[TID][j];
                     predkeys = params[PID].keys();
