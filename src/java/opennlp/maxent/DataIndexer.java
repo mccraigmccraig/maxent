@@ -27,7 +27,7 @@ import java.util.*;
  * used by the GIS trainer.
  *
  * @author      Jason Baldridge
- * @version $Revision: 1.7 $, $Date: 2002/01/03 14:34:29 $
+ * @version $Revision: 1.8 $, $Date: 2002/01/03 16:43:23 $
  */
 public class DataIndexer {
     public int[][] contexts;
@@ -58,7 +58,7 @@ public class DataIndexer {
     public DataIndexer(EventStream eventStream, int cutoff) {
         TObjectIntHashMap predicateIndex;
         TLinkedList events;
-        ComparableEvent[] eventsToCompare;
+        List eventsToCompare;
 
         predicateIndex = new TObjectIntHashMap();
         System.out.println("Indexing events using cutoff of " + cutoff + "\n");
@@ -89,27 +89,29 @@ public class DataIndexer {
      * @param eventsToCompare a <code>ComparableEvent[]</code> value
      * @since maxent 1.2.6
      */
-    private void sortAndMerge(ComparableEvent[] eventsToCompare) {
-        Arrays.sort(eventsToCompare);
-        int numEvents = eventsToCompare.length;
+    private void sortAndMerge(List eventsToCompare) {
+        Collections.sort(eventsToCompare);
+        int numEvents = eventsToCompare.size();
         int numUniqueEvents = 1; // assertion: eventsToCompare.length >= 1
 
-        if (eventsToCompare.length <= 1) {
+        if (numEvents <= 1) {
             return;             // nothing to do; edge case (see assertion)
         }
 
-        ComparableEvent ce = eventsToCompare[0];
+        ComparableEvent ce = (ComparableEvent)eventsToCompare.get(0);
         for (int i=1; i<numEvents; i++) {
-            if (ce.compareTo(eventsToCompare[i]) == 0) {
+            ComparableEvent ce2 = (ComparableEvent)eventsToCompare.get(i);
+            
+            if (ce.compareTo(ce2) == 0) {
                 ce.seen++;      // increment the seen count
-                eventsToCompare[i] = null; // kill the duplicate
+                eventsToCompare.set(i, null); // kill the duplicate
             } else {
-                ce = eventsToCompare[i]; // a new champion emerges...
+                ce = ce2; // a new champion emerges...
                 numUniqueEvents++; // increment the # of unique events
             }
         }
 
-        System.out.println("done. Reduced " + eventsToCompare.length
+        System.out.println("done. Reduced " + numEvents
                            + " events to " + numUniqueEvents + ".");
 
         contexts = new int[numUniqueEvents][];
@@ -117,7 +119,7 @@ public class DataIndexer {
         numTimesEventsSeen = new int[numUniqueEvents];
 
         for (int i = 0, j = 0; i<numEvents; i++) {
-            ComparableEvent evt = eventsToCompare[i];
+            ComparableEvent evt = (ComparableEvent)eventsToCompare.get(i);
             if (null == evt) {
                 continue;       // this was a dupe, skip over it.
             }
@@ -167,19 +169,20 @@ public class DataIndexer {
         return events;
     }
 
-    private ComparableEvent[] index(TLinkedList events,
-                                    TObjectIntHashMap predicateIndex) {
+    private List index(TLinkedList events,
+                       TObjectIntHashMap predicateIndex) {
         TObjectIntHashMap omap = new TObjectIntHashMap();
 
         int numEvents = events.size();
         int outcomeCount = 0;
         int predCount = 0;
-        ComparableEvent[] eventsToCompare = new ComparableEvent[numEvents];
+        List eventsToCompare = new ArrayList(numEvents);
         TIntArrayList indexedContext = new TIntArrayList();
 
         for (int eventIndex=0; eventIndex<numEvents; eventIndex++) {
             Event ev = (Event)events.removeFirst();
             String[] econtext = ev.getContext();
+            ComparableEvent ce;
 	    
             int predID, ocID;
             String oc = ev.getOutcome();
@@ -200,8 +203,8 @@ public class DataIndexer {
 
             // drop events with no active features
             if (indexedContext.size() > 0) {
-                eventsToCompare[eventIndex] =
-                    new ComparableEvent(ocID, indexedContext.toNativeArray());
+                ce = new ComparableEvent(ocID, indexedContext.toNativeArray());
+                eventsToCompare.add(ce);
             }
             // recycle the TIntArrayList
             indexedContext.resetQuick();
