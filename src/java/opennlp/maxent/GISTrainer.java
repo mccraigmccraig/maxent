@@ -27,7 +27,7 @@ import gnu.trove.*;
  * and is available at <a href ="ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z"><code>ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z</code></a>. 
  *
  * @author  Jason Baldridge
- * @version $Revision: 1.11 $, $Date: 2003/12/13 16:41:29 $
+ * @version $Revision: 1.12 $, $Date: 2003/12/17 19:37:10 $
  */
 class GISTrainer {
 
@@ -419,6 +419,7 @@ class GISTrainer {
         double loglikelihood = 0.0; 
         CFMOD=0.0;
 	int numEvents=0;
+        int numCorrect = 0;
         for (TID=0; TID<numTokens; TID++) {
 	  // TID, modeldistribution and PID are globals used in 
 	  // the updateModifiers procedure.  They need to be set.
@@ -436,6 +437,18 @@ class GISTrainer {
 
 	  loglikelihood+=Math.log(modelDistribution[outcomes[TID]])*numTimesEventsSeen[TID];
 	  numEvents+=numTimesEventsSeen[TID];
+          if (printMessages) { 
+            int max = 0;
+            for (OID=1;OID<numOutcomes;OID++) {
+              if (modelDistribution[OID] > modelDistribution[max]) {
+                max = OID;
+              }
+            }
+            if (max == outcomes[TID]) {
+              numCorrect+=numTimesEventsSeen[TID];
+            }
+          }
+    
         }
         display(".");
 	
@@ -447,7 +460,7 @@ class GISTrainer {
         if (CFMOD > 0.0) 
             correctionParam +=(cfObservedExpect - Math.log(CFMOD));
 
-        display(". loglikelihood="+loglikelihood+"\n");
+        display(". loglikelihood="+loglikelihood+"\t"+((double) numCorrect/numEvents)+"\n");
 	return(loglikelihood);
     }    
 
