@@ -1,0 +1,84 @@
+<project name="maxent" default="compile" basedir=".">
+
+  <property name="version" value="1.2.0"/>
+
+  <!-- set global properties for this build -->
+  <property name="myenv" environment="myenv"/>
+  <property name="opennlp"  value="${myenv.OPENNLP_TOP}/opennlp"/>
+  <property name="build" value="${myenv.CLASSES}"/>
+  <property name="build.compiler" value="${myenv.JAVAC}"/>
+
+  <property name="name" value="maxent"/>
+  <property name="src" value="${opennlp}/${name}"/>
+  <property name="opennlp.lib" value="${opennlp}/lib"/>
+
+  <property name="dist.file" value="${name}-${version}"/>
+  <property name="dist.dir" value="${opennlp.lib}/${dist.file}"/>
+  <property name="dist.jar" value="${dist.dir}/${dist.file}.jar"/>
+  <property name="dist.api" value="${dist.dir}/api"/>
+
+  <target name="init">
+    <!-- Create the time stamp -->
+    <tstamp/>
+    <!-- Create the build directory structure used by compile -->
+    <mkdir dir="${build}"/>
+  </target>
+
+  <target name="compile" depends="init">
+    <!-- Compile the java code from ${src} into ${build} -->
+    <javac srcdir="${src}" destdir="${build}"/>
+  </target>
+
+  <target name="clean">
+    <!-- Delete the ${build} and ${dist} directory trees -->
+    <delete dir="${build}/opennlp/maxent"/>
+  </target>
+
+  <target name="jar">
+    <mkdir dir="${dist.dir}"/>
+    <jar jarfile="${dist.jar}"
+         basedir="${build}"
+         includes="opennlp/maxent/**"
+    />
+  </target>
+
+  <target name="javadoc">
+    <mkdir dir="${dist.api}"/>
+    <javadoc packagenames="opennlp.maxent.*"
+  	     sourcepath="${myenv.OPENNLP_TOP}"
+  	     destdir="${dist.api}"
+  	     author="true"
+  	     version="true"
+  	     use="true"
+  	     windowtitle="OpenNLP Maxent API"
+  	     doctitle="OpenNLP Maxent"/>
+  </target>
+
+  <target name="prepare_dist">
+    <delete dir="${dist.dir}"/>
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Creates the distribution                                            -->
+  <!-- =================================================================== -->
+  <target name="dist" depends="prepare_dist,jar,javadoc">
+    <echo message="Creating release file."/>
+    <mkdir dir="${dist.dir}"/>
+    <mkdir dir="${dist.dir}/opennlp/maxent"/>
+    <mkdir dir="${dist.api}"/>
+
+    <!-- Copy over sources and source documentation -->
+    <copy todir="${dist.dir}/opennlp/maxent">
+      <fileset dir="${src}"/>
+    </copy>
+    
+    <tar tarfile="${opennlp.lib}/${dist.file}.tar" basedir="${opennlp.lib}" includes="${dist.file}/**"/>
+    <gzip src="${opennlp.lib}/${dist.file}.tar" zipfile="${opennlp.lib}/${dist.file}.tar.gz"/>
+    <delete file="${opennlp.lib}/${dist.file}.tar"/>
+    <delete dir="${opennlp.lib}/${dist.file}"/>
+
+  </target>
+  
+
+
+</project>
