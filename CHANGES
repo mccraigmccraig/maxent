@@ -1,11 +1,25 @@
-1.2.3
+1.2.4
 -----
+Added options for doing *very* simple smoothing, in which we 'observe'
+features that we didn't actually see in the training data.  Seems to
+improve performance for models with small data sets and only a few
+outcomes, though it conversely appears to degrade those with lots of
+data and lots of outcomes.
+
+Added BasicEventStream and BasicContextGenerator classes which assume
+that the contextual predicates and outcomes are just sitting pretty in
+lines.  This allows the events to be stored in a file and then read in
+for training without scanning around producing the events everytime.
+
 Added sample application "sports" to help with testing model behavior
-and act as an example to help newbies use the toolkit.
+and to act as an example to help newbies use the toolkit and build
+their own maxent applications.
 
 Fixed bug in TrainEval in which the number of iterations and the
 cutoff were swapped in the call to train the model.
 
+PerlHelp and BasicEnglishAffixes classes were moved out of Maxent so
+that gnu-regexp.jar is no longer needed.
 
 
 1.2.2

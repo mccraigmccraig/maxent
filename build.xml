@@ -1,4 +1,4 @@
-<!-- $Id: build.xml,v 1.9 2001/11/19 02:17:36 ericdf Exp $ -->
+<!-- $Id: build.xml,v 1.10 2001/11/21 10:15:55 jasonbaldridge Exp $ -->
 
 <project default="package" basedir=".">
 
@@ -9,7 +9,7 @@
     <tstamp/>
     <property name="Name" value="Maxent"/>
     <property name="name" value="maxent"/>
-    <property name="version" value="1.2.3"/>
+    <property name="version" value="1.2.4"/>
     <property name="year" value="2001"/>
 
     <echo message="----------- ${Name} ${version} [${year}] ------------"/>
@@ -127,6 +127,9 @@
 	<pathelement location="${lib.dir}/colt.jar"/>
 	<pathelement location="${lib.dir}/trove.jar"/>
       </mergefiles>
+      <addfiles>
+        <pathelement path="META-INF"/>
+      </addfiles>
     </jlink>
     <delete file="${build.dir}/${name}-${DSTAMP}.jar" />
   </target>
