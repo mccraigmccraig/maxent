@@ -1,4 +1,4 @@
-///////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 // Copyright (C) 2001 Jason Baldridge and Gann Bierner
 //
 // This library is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@ import java.util.zip.*;
  * and is available at <a href ="ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z"><code>ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z</code></a>. 
  *
  * @author  Jason Baldridge
- * @version $Revision: 1.6 $, $Date: 2002/04/23 16:10:07 $
+ * @version $Revision: 1.7 $, $Date: 2002/11/20 03:05:25 $
  */
 class GISTrainer {
 
@@ -48,7 +48,7 @@ class GISTrainer {
     private double _smoothingObservation = 0.1;
     
     private boolean printMessages = false;
-
+  
     private int numTokens;   // # of event tokens
     private int numPreds;    // # of predicates
     private int numOutcomes; // # of outcomes
@@ -57,10 +57,13 @@ class GISTrainer {
     private int OID;         // global index variable for Outcomes
 
     // a global variable for adding probabilities in an array
-    private double PABISUM; 
+    private double SUM; 
 
     // records the array of predicates seen in each event
     private int[][] contexts; 
+
+    // records the array of outcomes seen in each event
+    private int[] outcomes; 
 
     // records the num of times an event has been seen, paired to
     // int[][] contexts
@@ -90,28 +93,28 @@ class GISTrainer {
     // a helper object for storing predicate indexes
     private int[] predkeys; 
 
-    // a boolean to track if all events have same number of active features
-    private boolean needCorrection;
-    // initialize the GIS constant
-    private int constant = 1;
+    // GIS constant number of feattures fired
+    private int constant;
     // stores inverse of constant after it is determined
     private double constantInverse;
     // the correction parameter of the model
-    private double correctionParam = 0.0; 
+    private double correctionParam; 
     // observed expectation of correction feature
     private double cfObservedExpect;
     // a global variable to help compute the amount to modify the correction
     // parameter
     private double CFMOD;
 
-    // stores the value of corrections feature for each event's predicate list,
-    // expanded to include all outcomes which might come from those predicates.
-    private TIntIntHashMap[] cfvals;
+    private final double NEAR_ZERO = 0.01;
+    private final double LLThreshold = 0.0001;
 
-    // Normalized Probabilities Of Outcomes Given Context: p(a|b_i)
-    // Stores the computation of each iterations for the update to the
-    // modifiers (and therefore the params)
-    private TIntDoubleHashMap[] pabi;
+    // Stores the output of the current model on a single event durring
+    // training.  This we be reset for every event for every itteration.
+    double[] modelDistribution;
+    // Stores the number of features that get fired per event
+    int[] numfeats;
+    // initial probability for all outcomes.
+    double iprob;
 
     // make all values in an TIntDoubleHashMap return to 0.0
     private TDoubleFunction backToZeros =
@@ -119,43 +122,13 @@ class GISTrainer {
                 public double execute(double arg) { return 0.0; }
             };
 
-    // divide all values in the TIntDoubleHashMap pabi[TID] by the sum of
-    // all values in the map.
-    private TDoubleFunction normalizePABI =
-        new TDoubleFunction() {
-                public double execute(double arg) { return arg / PABISUM; }
-            };
-
-    // add the previous iteration's parameters to the computation of the
-    // modifiers of this iteration.
-    private TIntDoubleProcedure addParamsToPABI =
-        new TIntDoubleProcedure() {
-                public boolean execute(int oid, double arg) {
-                    pabi[TID].adjustValue(oid, arg);
-                    return true;
-                }
-            };
-
-    // add the correction parameter and exponentiate it
-    private TIntDoubleProcedure addCorrectionToPABIandExponentiate =
-        new TIntDoubleProcedure() {
-                public boolean execute(int oid, double arg) {
-                    if (needCorrection)
-                        arg = arg + (correctionParam * cfvals[TID].get(oid));
-                    arg = Math.exp(arg);
-                    PABISUM += arg;
-                    pabi[TID].put(oid, arg);
-                    return true;
-                }
-            };
-
-    // update the modifiers based on the new pabi values
+    // update the modifiers based on the modelDistribution for this event values
     private TIntDoubleProcedure updateModifiers =
         new TIntDoubleProcedure() {
                 public boolean execute(int oid, double arg) {
                     modifiers[PID].put(oid,
                                        arg
-                                       + (pabi[TID].get(oid)
+                                       + (modelDistribution[oid]
                                           * numTimesEventsSeen[TID]));
                     return true;
                 }
@@ -166,21 +139,8 @@ class GISTrainer {
         new TIntDoubleProcedure() {
                 public boolean execute(int oid, double arg) {
                     params[PID].put(oid,
-                                    arg
-                                    + (constantInverse *
-                                       (observedExpects[PID].get(oid)
-                                        - Math.log(modifiers[PID].get(oid)))));
-                    return true;
-                }
-            };
-
-    // update the correction feature modifier, which will then be used to
-    // updated the correction parameter
-    private TIntDoubleProcedure updateCorrectionFeatureModifier =
-        new TIntDoubleProcedure() {
-                public boolean execute(int oid, double arg) {
-                    CFMOD +=
-			arg * cfvals[TID].get(oid) * numTimesEventsSeen[TID];
+                                    arg +(observedExpects[PID].get(oid)
+					  - Math.log(modifiers[PID].get(oid))));
                     return true;
                 }
             };
@@ -249,12 +209,14 @@ class GISTrainer {
         /************** Incorporate all of the needed info ******************/
         display("Incorporating indexed data for training...  \n");
         contexts = di.contexts;
+	outcomes = di.outcomeList;
         numTimesEventsSeen = di.numTimesEventsSeen;
         numTokens = contexts.length;
-
+	
         //printTable(contexts);
 
-        needCorrection = false; 
+	// a boolean to track if all events have same number of active features
+        boolean needCorrection = false; 
 
         // determine the correction constant and its inverse, and check to see
         // whether we need the correction features
@@ -268,11 +230,24 @@ class GISTrainer {
                 constant = contexts[TID].length;
             }
         }
+	
+	int cfvalSum = 0;
+	for (TID=0; TID<numTokens; TID++)
+	  cfvalSum += (constant - contexts[TID].length)
+	    * numTimesEventsSeen[TID];
+	if (cfvalSum == 0) {
+	  cfObservedExpect = Math.log(NEAR_ZERO);//nearly zero so log is defined
+	}
+	else {
+	  cfObservedExpect = Math.log(cfvalSum);
+	}
+	
+	display("done.\n");
 
         constantInverse = 1.0/constant;
-	
         outcomeLabels = di.outcomeLabels;
         numOutcomes = outcomeLabels.length;
+	iprob = Math.log(1.0/numOutcomes);
 
         predLabels = di.predLabels;
         numPreds = predLabels.length;
@@ -295,7 +270,8 @@ class GISTrainer {
 	// A fake "observation" to cover features which are not detected in
 	// the data.  The default is to assume that we observed "1/10th" of a
 	// feature during training.
-	final double smoothingObservation = Math.log(_smoothingObservation);
+	final double smoothingObservation = _smoothingObservation;
+	final double logSmoothingObservation = Math.log(_smoothingObservation);
 
         // Get the observed expectations of the features. Strictly speaking,
         // we should divide the counts by the number of Tokens, but because of
@@ -337,69 +313,13 @@ class GISTrainer {
             modifiers[PID].compact();
             observedExpects[PID].compact();
         }
-
+	correctionParam = 0.0;
         predCount = null; // don't need it anymore
 	
         display("...done.\n");
 
-        pabi = new TIntDoubleHashMap[numTokens];
-
-        if (needCorrection) {
-            // initialize both the pabi table and the cfvals matrix
-            display("Computing correction feature matrix... ");
-	
-            cfvals = new TIntIntHashMap[numTokens];
-            for (TID=0; TID<numTokens; TID++) {
-                cfvals[TID] = new TIntIntHashMap(initialCapacity, loadFactor);
-                pabi[TID] = new TIntDoubleHashMap(initialCapacity, loadFactor);
-                for (int j=0; j<contexts[TID].length; j++) {
-                    PID = contexts[TID][j];
-                    predkeys = params[PID].keys();
-                    for (int i=0; i<predkeys.length; i++) {
-                        OID = predkeys[i];
-                        if (!cfvals[TID].increment(OID)) {
-                            cfvals[TID].put(OID, 1);
-                            pabi[TID].put(OID, 0.0);
-                        }
-                    }
-                }
-                cfvals[TID].compact();
-                pabi[TID].compact();
-            }
-	
-            for (TID=0; TID<numTokens; TID++) {
-                predkeys = cfvals[TID].keys();
-                for (int i=0; i<predkeys.length; i++) {
-                    OID = predkeys[i];
-                    cfvals[TID].put(OID, constant - cfvals[TID].get(OID));
-                }
-            }
-
-            // compute observed expectation of correction feature (E_p~ f_l)
-            int cfvalSum = 0;
-            for (TID=0; TID<numTokens; TID++)
-                cfvalSum += (constant - contexts[TID].length)
-		            * numTimesEventsSeen[TID];
-	    
-            cfObservedExpect = Math.log(cfvalSum);
-	    
-            display("done.\n");
-
-        }
-        else {
-            // initialize just the pabi table
-            pabi = new TIntDoubleHashMap[numTokens];
-            for (TID=0; TID<numTokens; TID++) {
-                pabi[TID] = new TIntDoubleHashMap(initialCapacity, loadFactor);
-                for (int j=0; j<contexts[TID].length; j++) {
-                    PID = contexts[TID][j];
-                    predkeys = params[PID].keys();
-                    for (int i=0; i<predkeys.length; i++)
-                        pabi[TID].put(predkeys[i], 0.0);
-                }
-                pabi[TID].compact();
-            }
-        }
+	modelDistribution = new double[numOutcomes];
+	numfeats = new int[numOutcomes];
 
         /***************** Find the parameters ************************/
         display("Computing model parameters...\n");
@@ -417,53 +337,98 @@ class GISTrainer {
     
     /* Estimate and return the model parameters. */
     private void findParameters(int iterations) {
+      double prevLL = 0.0;
+      double currLL = 0.0;
         display("Performing " + iterations + " iterations.\n");
         for (int i=1; i<=iterations; i++) {
             if (i<10) display("  " + i + ":  ");
             else if (i<100) display(" " + i + ":  ");
             else display(i + ":  ");
-            nextIteration();
+            currLL=nextIteration();
+	    if (i > 1) {
+	      if (prevLL > currLL) {
+		System.err.println("Model Diverging: loglikelihood decreased");
+		break;
+	      }
+	      if (currLL-prevLL < LLThreshold) {
+		break;
+	      }
+	    }
+	    prevLL=currLL;
         }
 
         // kill a bunch of these big objects now that we don't need them
         observedExpects = null;
-        pabi = null;
         modifiers = null;
-        cfvals = null;
         numTimesEventsSeen = null;
         contexts = null;
     }
 
 
-    /* Compute one iteration of GIS */
-    private void nextIteration() {
+    /**
+     * Use this model to evaluate a context and return an array of the
+     * likelihood of each outcome given that context.
+     *
+     * @param context The integers of the predicates which have been
+     *                observed at the present decision point.
+     * @return        The normalized probabilities for the outcomes given the
+     *                context. The indexes of the double[] are the outcome
+     *                ids, and the actual string representation of the
+     *                outcomes can be obtained from the method
+     *  	      getOutcome(int i).
+     */
+    public void eval(int[] context, double[] outsums) {
+      for (int oid=0; oid<numOutcomes; oid++) {
+	outsums[oid] = iprob;
+	numfeats[oid] = 0;
+      }
+      int[] activeOutcomes;
+      for (int i=0; i<context.length; i++) {
+	TIntDoubleHashMap predParams = params[context[i]];
+	activeOutcomes = predParams.keys();
+	for (int j=0; j<activeOutcomes.length; j++) {
+	  int oid = activeOutcomes[j];
+	  numfeats[oid]++;
+	  outsums[oid] += constantInverse * predParams.get(oid);
+	}
+      }
 
-        // compute table probabilities of outcomes given contexts 
-        CFMOD = 0.0;
-        for (TID=0; TID<numTokens; TID++) {
-            pabi[TID].transformValues(backToZeros);
+      double SUM = 0.0;
+      for (int oid=0; oid<numOutcomes; oid++) {
+	outsums[oid] = Math.exp(outsums[oid]
+				+ ((1.0 -
+				    (numfeats[oid]/constant))
+				    * correctionParam));
+	SUM += outsums[oid];
+      }
 
-            for (int j=0; j<contexts[TID].length; j++)
-                params[contexts[TID][j]].forEachEntry(addParamsToPABI);
+      for (int oid=0; oid<numOutcomes; oid++)
+	outsums[oid] /= SUM;
+      
+    }
+    
 
-            PABISUM = 0.0; // PABISUM is computed in the next line's procedure
-            pabi[TID].forEachEntry(addCorrectionToPABIandExponentiate);
-            if (PABISUM > 0.0) pabi[TID].transformValues(normalizePABI);
-
-            if (needCorrection)
-                pabi[TID].forEachEntry(updateCorrectionFeatureModifier);
-        }
-        display(".");
-
+    /* Compute one iteration of GIS and retutn log-likelihood.*/
+    private double nextIteration() {
         // compute contribution of p(a|b_i) for each feature and the new
         // correction parameter
+        double loglikelihood = 0.0; 
+        CFMOD=0.0;
         for (TID=0; TID<numTokens; TID++) {
-            for (int j=0; j<contexts[TID].length; j++) {
-                // do not remove the next line since we need to know PID
-                // globally for the updateModifiers procedure used after it
-                PID = contexts[TID][j]; 
-                modifiers[PID].forEachEntry(updateModifiers);
-            }
+	  // modeldistribution and PID are globals used in 
+	  // the updateModifiers procedure.  They need to be set.
+	  eval(contexts[TID],modelDistribution);
+	  for (int j=0; j<contexts[TID].length; j++) {
+	    PID = contexts[TID][j]; 
+	    modifiers[PID].forEachEntry(updateModifiers);
+	    for (OID=0;OID<numOutcomes;OID++) {
+	      if (!modifiers[PID].containsKey(OID)) {
+		CFMOD+=modelDistribution[OID]*numTimesEventsSeen[TID];
+	      }
+	    }
+	    loglikelihood+=Math.log(modelDistribution[outcomes[TID]]);
+	  }
+	  CFMOD+=constant-contexts[TID].length;
         }
         display(".");
 	
@@ -472,13 +437,11 @@ class GISTrainer {
             params[PID].forEachEntry(updateParams);
             modifiers[PID].transformValues(backToZeros); // re-initialize to 0.0's
         }
-
         if (CFMOD > 0.0) 
-            correctionParam +=
-                constantInverse * (cfObservedExpect - Math.log(CFMOD));
+            correctionParam +=(cfObservedExpect - Math.log(CFMOD));
 
-        display(".\n");
-	
+        display(". loglikelihood="+loglikelihood+"\n");
+	return(loglikelihood);
     }    
 
     private void display (String s) {
