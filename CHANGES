@@ -1,7 +1,18 @@
-2.1.0
+2.1.0 (Major bug fixes) 
 -----
 
+Fixed some bugs with the updating off the corrections paramater.
+Namely the expected value needed to check if a particular context was
+avalable with the outcome seen in training and if not add a term to
+the expected value of the correction constant. (Tom)
 
+Smoothing initial value wasn't in the log domain. (Tom)
+
+Loglikelihood update as returned by nextIteration wasn't in the right
+place so the loglikelihood value it returned was incorrect. (Tom)
+
+Added cast to integer division in model update. (Tom, fixing bug
+pointed out by Zhang Le)
 
 
 2.0 (Major improvements)
