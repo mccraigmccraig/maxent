@@ -90,6 +90,14 @@ On a side note, though the features appear in almost the same
 orderings in the data files, this is not important. You can list them
 in whatever order you like.
 
+You can also play around with the smoothing option by setting the
+boolean value USE_SMOOTHING to "true" in CreateModel.java.  This makes
+a difference in performance on the gameLocation decision.  In
+particular, when the only feature available is "Rainy" for a
+decision.  So, try training the model with smoothing and without
+smoothing, and then testing it on "gameLocation.test" for both models
+to see the difference for the input "Rainy".
+
 If you have any suggestions, interesting modifications, or data sets
 for other examples to add to this sample maxent application, please
 post them to the maxent open discussion forum:

@@ -25,10 +25,19 @@ import java.io.*;
  * from the data.
  *
  * @author  Chieu Hai Leong and Jason Baldridge
- * @version $Revision: 1.1 $, $Date: 2001/11/15 13:03:41 $
+ * @version $Revision: 1.2 $, $Date: 2001/11/16 10:38:21 $
  */
 public class CreateModel {
 
+    // some parameters if you want to play around with the smoothing option
+    // for model training.  This can improve model accuracy, though training
+    // will potentially take longer and use more memory.  Model size will also
+    // be larger.  Initial testing indicates improvements for models built on
+    // small data sets and few outcomes, but performance degradation for those
+    // with large data sets and lots of outcomes.
+    public static boolean USE_SMOOTHING = false;
+    public static double SMOOTHING_OBSERVATION = 0.1;
+    
     /**
      * Main method. Call as follows:
      * <p>
@@ -43,6 +52,8 @@ public class CreateModel {
 	    FileReader datafr = new FileReader(new File(dataFileName));
 	    EventCollector ec = new MyEventCollector(datafr);
 	    EventStream es = new EventCollectorAsStream(ec);
+	    GIS.SMOOTHING = USE_SMOOTHING;
+	    GIS.SMOOTHING_OBSERVATION = SMOOTHING_OBSERVATION;
 	    GISModel model = GIS.trainModel(es);
 
 	    File outputFile = new File(modelFileName);
