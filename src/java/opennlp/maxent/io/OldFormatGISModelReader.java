@@ -17,7 +17,7 @@
 //////////////////////////////////////////////////////////////////////////////   
 package opennlp.maxent.io;
 
-import cern.colt.map.*;
+import gnu.trove.*;
 import java.io.*;
 import java.util.zip.*;
 
@@ -28,7 +28,7 @@ import java.util.zip.*;
  * which stores the parameters.
  *
  * @author      Jason Baldridge
- * @version     $Revision: 1.1 $, $Date: 2001/10/23 14:06:53 $
+ * @version     $Revision: 1.2 $, $Date: 2001/12/27 19:20:26 $
  */
 public class OldFormatGISModelReader extends PlainTextGISModelReader {
     DataInputStream paramsInput;
@@ -44,24 +44,24 @@ public class OldFormatGISModelReader extends PlainTextGISModelReader {
 		          new FileInputStream(modelname+".mep.gz")));
     }
 
-    protected OpenIntDoubleHashMap[] getParameters (int[][] outcomePatterns)
-	throws java.io.IOException {
+    protected TIntDoubleHashMap[] getParameters (int[][] outcomePatterns)
+        throws java.io.IOException {
 	
-	OpenIntDoubleHashMap[] params = new OpenIntDoubleHashMap[NUM_PREDS];
+        TIntDoubleHashMap[] params = new TIntDoubleHashMap[NUM_PREDS];
 	  
-	int pid=0;
-	for (int i=0; i<outcomePatterns.length; i++) {
-	    for (int j=0; j<outcomePatterns[i][0]; j++) {
-		params[pid] = new OpenIntDoubleHashMap();
-		for (int k=1; k<outcomePatterns[i].length; k++) {
-		    double d = paramsInput.readDouble();
-		    params[pid].put(outcomePatterns[i][k], d);
-		}
-		params[pid].trimToSize();
-		pid++;
-	    }
-	}
-	return params;
+        int pid=0;
+        for (int i=0; i<outcomePatterns.length; i++) {
+            for (int j=0; j<outcomePatterns[i][0]; j++) {
+                params[pid] = new TIntDoubleHashMap();
+                for (int k=1; k<outcomePatterns[i].length; k++) {
+                    double d = paramsInput.readDouble();
+                    params[pid].put(outcomePatterns[i][k], d);
+                }
+                params[pid].compact();
+                pid++;
+            }
+        }
+        return params;
     }
 
 

@@ -19,8 +19,6 @@ package opennlp.maxent.io;
 
 import opennlp.maxent.*;
 import gnu.trove.*;
-import cern.colt.list.*;
-import cern.colt.map.*;
 import java.io.*;
 import java.util.*;
 
@@ -30,10 +28,10 @@ import java.util.*;
  * extending class to define precisely how the data should be stored.
  *
  * @author      Jason Baldridge
- * @version     $Revision: 1.3 $, $Date: 2001/11/15 16:18:40 $
+ * @version     $Revision: 1.4 $, $Date: 2001/12/27 19:20:26 $
  */
 public abstract class GISModelWriter {
-    protected OpenIntDoubleHashMap[] PARAMS;
+    protected TIntDoubleHashMap[] PARAMS;
     protected String[] OUTCOME_LABELS;
     protected int CORRECTION_CONSTANT;
     protected double CORRECTION_PARAM;
@@ -43,7 +41,7 @@ public abstract class GISModelWriter {
 
     	Object[] data = model.getDataStructures();
 
-	PARAMS = (OpenIntDoubleHashMap[])data[0];
+	PARAMS = (TIntDoubleHashMap[])data[0];
 	TObjectIntHashMap pmap = (TObjectIntHashMap)data[1];
 	OUTCOME_LABELS = (String[])data[2];
 	CORRECTION_CONSTANT = ((Integer)data[3]).intValue();
@@ -120,35 +118,35 @@ public abstract class GISModelWriter {
 
     protected ComparablePredicate[] sortValues () {
 	
-	ComparablePredicate[] sortPreds =
-	    new ComparablePredicate[PARAMS.length];
+        ComparablePredicate[] sortPreds =
+            new ComparablePredicate[PARAMS.length];
 
-	int numParams = 0;	
-	for (int pid=0; pid<PARAMS.length; pid++) {
-	    IntArrayList predkeys = PARAMS[pid].keys();
-	    predkeys.sort();
+        int numParams = 0;	
+        for (int pid=0; pid<PARAMS.length; pid++) {
+            int[] predkeys = PARAMS[pid].keys();
+            Arrays.sort(predkeys);
 	    
-	    int numActive = predkeys.size();
+            int numActive = predkeys.length;
 
-	    numParams += numActive;
-	    int[] activeOCs = new int[numActive];
-	    double[] activeParams = new double[numActive];
+            numParams += numActive;
+            int[] activeOCs = new int[numActive];
+            double[] activeParams = new double[numActive];
 	    
-	    int id = 0;	   
-	    for (int i=0; i<predkeys.size(); i++) {
-		int oid = predkeys.get(i);
-		activeOCs[id] = oid;
-		activeParams[id] = PARAMS[pid].get(oid);
-		id++;
-	    }
+            int id = 0;	   
+            for (int i=0; i < predkeys.length; i++) {
+                int oid = predkeys[i];
+                activeOCs[id] = oid;
+                activeParams[id] = PARAMS[pid].get(oid);
+                id++;
+            }
 	    
-	    sortPreds[pid] = new ComparablePredicate(PRED_LABELS[pid],
-						     activeOCs,
-						     activeParams);
-	}
+            sortPreds[pid] = new ComparablePredicate(PRED_LABELS[pid],
+                                                     activeOCs,
+                                                     activeParams);
+        }
 		
-	Arrays.sort(sortPreds);
-	return sortPreds;
+        Arrays.sort(sortPreds);
+        return sortPreds;
     }
     
     protected List compressOutcomes (ComparablePredicate[] sorted) {

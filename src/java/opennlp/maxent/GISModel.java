@@ -18,8 +18,6 @@
 package opennlp.maxent;
 
 import gnu.trove.*;
-import cern.colt.list.*;
-import cern.colt.map.*;
 import java.util.*;
 
 /**
@@ -27,10 +25,10 @@ import java.util.*;
  * Iterative Scaling procedure (implemented in GIS.java).
  *
  * @author      Tom Morton and Jason Baldridge
- * @version     $Revision: 1.5 $, $Date: 2001/11/30 14:33:28 $
+ * @version     $Revision: 1.6 $, $Date: 2001/12/27 19:20:26 $
  */
 public final class GISModel implements MaxentModel {
-    private final OpenIntDoubleHashMap[] params;
+    private final TIntDoubleHashMap[] params;
     private final TObjectIntHashMap pmap;
     private final String[] ocNames;
     private final int correctionConstant;
@@ -40,24 +38,24 @@ public final class GISModel implements MaxentModel {
     private final double iprob;
     private final double fval;
     
-    public GISModel (OpenIntDoubleHashMap[] _params,
-		     String[] predLabels,
-		     String[] _ocNames,
-		     int _correctionConstant,
-		     double _correctionParam) {
+    public GISModel (TIntDoubleHashMap[] _params,
+                     String[] predLabels,
+                     String[] _ocNames,
+                     int _correctionConstant,
+                     double _correctionParam) {
 
-	pmap = new TObjectIntHashMap(predLabels.length);
-	for (int i=0; i<predLabels.length; i++)
-	    pmap.put(predLabels[i], i);
+        pmap = new TObjectIntHashMap(predLabels.length);
+        for (int i=0; i<predLabels.length; i++)
+            pmap.put(predLabels[i], i);
 
-	params = _params;
-	ocNames =  _ocNames;
-	correctionConstant = _correctionConstant;
-	correctionParam = _correctionParam;
+        params = _params;
+        ocNames =  _ocNames;
+        correctionConstant = _correctionConstant;
+        correctionParam = _correctionParam;
 	
-	numOutcomes = ocNames.length;
-	iprob = Math.log(1.0/numOutcomes);
-	fval = 1.0/correctionConstant;
+        numOutcomes = ocNames.length;
+        iprob = Math.log(1.0/numOutcomes);
+        fval = 1.0/correctionConstant;
 	
     }
     
@@ -76,41 +74,41 @@ public final class GISModel implements MaxentModel {
      *  	      getOutcome(int i).
      */
     public final double[] eval(String[] context) {
-	double[] outsums = new double[numOutcomes];
-	int[] numfeats = new int[numOutcomes];
+        double[] outsums = new double[numOutcomes];
+        int[] numfeats = new int[numOutcomes];
 
-	for (int oid=0; oid<numOutcomes; oid++) {
-	    outsums[oid] = iprob;
-	    numfeats[oid] = 0;
-	}
+        for (int oid=0; oid<numOutcomes; oid++) {
+            outsums[oid] = iprob;
+            numfeats[oid] = 0;
+        }
 
-	IntArrayList activeOutcomes = new IntArrayList(0);
-	for (int i=0; i<context.length; i++) {
-	    if (pmap.containsKey(context[i])) {
-		OpenIntDoubleHashMap predParams =
-		    params[pmap.get(context[i])];
-		predParams.keys(activeOutcomes);
-		for (int j=0; j<activeOutcomes.size(); j++) {
-		    int oid = activeOutcomes.getQuick(j);
-		    numfeats[oid]++;
-		    outsums[oid] += fval * predParams.get(oid);
-		}
-	    }
-	}
+        int[] activeOutcomes;
+        for (int i=0; i<context.length; i++) {
+            if (pmap.containsKey(context[i])) {
+                TIntDoubleHashMap predParams =
+                    params[pmap.get(context[i])];
+                activeOutcomes = predParams.keys();
+                for (int j=0; j<activeOutcomes.length; j++) {
+                    int oid = activeOutcomes[j];
+                    numfeats[oid]++;
+                    outsums[oid] += fval * predParams.get(oid);
+                }
+            }
+        }
 
-	double normal = 0.0;
-	for (int oid=0; oid<numOutcomes; oid++) {
-	    outsums[oid] = Math.exp(outsums[oid]
-				    + ((1.0 -
-					(numfeats[oid]/correctionConstant))
-				       * correctionParam));
-	    normal += outsums[oid];
-	}
+        double normal = 0.0;
+        for (int oid=0; oid<numOutcomes; oid++) {
+            outsums[oid] = Math.exp(outsums[oid]
+                                    + ((1.0 -
+                                        (numfeats[oid]/correctionConstant))
+                                       * correctionParam));
+            normal += outsums[oid];
+        }
 
-	for (int oid=0; oid<numOutcomes; oid++)
-	    outsums[oid] /= normal;
+        for (int oid=0; oid<numOutcomes; oid++)
+            outsums[oid] /= normal;
 
-	return outsums;
+        return outsums;
     }
 
     
@@ -123,10 +121,10 @@ public final class GISModel implements MaxentModel {
      * @return    The name of the most likely outcome.
      */    
     public final String getBestOutcome(double[] ocs) {
-	int best = 0;
-	for (int i = 1; i<ocs.length; i++)
-	    if (ocs[i] > ocs[best]) best = i;
-	return ocNames[best];
+        int best = 0;
+        for (int i = 1; i<ocs.length; i++)
+            if (ocs[i] > ocs[best]) best = i;
+        return ocNames[best];
     }
 
     
@@ -143,23 +141,23 @@ public final class GISModel implements MaxentModel {
      *            for each one.
      */    
     public final String getAllOutcomes (double[] ocs) {
-	if (ocs.length != ocNames.length) {
-	    return "The double array sent as a parameter to GISModel.getAllOutcomes() must not have been produced by this model.";
-	}
-	else {
-	    StringBuffer sb = new StringBuffer(ocs.length*2);
-	    String d = Double.toString(ocs[0]);
-	    if (d.length() > 6)
-		d = d.substring(0,7);
-	    sb.append(ocNames[0]).append("[").append(d).append("]");
-	    for (int i = 1; i<ocs.length; i++) {
-		d = Double.toString(ocs[i]);
-		if (d.length() > 6)
-		    d = d.substring(0,7);
-		sb.append("  ").append(ocNames[i]).append("[").append(d).append("]");
-	    }
-	    return sb.toString();
-	}
+        if (ocs.length != ocNames.length) {
+            return "The double array sent as a parameter to GISModel.getAllOutcomes() must not have been produced by this model.";
+        }
+        else {
+            StringBuffer sb = new StringBuffer(ocs.length*2);
+            String d = Double.toString(ocs[0]);
+            if (d.length() > 6)
+                d = d.substring(0,7);
+            sb.append(ocNames[0]).append("[").append(d).append("]");
+            for (int i = 1; i<ocs.length; i++) {
+                d = Double.toString(ocs[i]);
+                if (d.length() > 6)
+                    d = d.substring(0,7);
+                sb.append("  ").append(ocNames[i]).append("[").append(d).append("]");
+            }
+            return sb.toString();
+        }
     }
 
     
@@ -170,7 +168,7 @@ public final class GISModel implements MaxentModel {
      * @return  The name of the outcome associated with that id.
      */
     public final String getOutcome(int i) {
-	return ocNames[i];
+        return ocNames[i];
     }
 
     /**
@@ -182,11 +180,11 @@ public final class GISModel implements MaxentModel {
      * model, -1 if it does not.
      **/
     public int getIndex (String outcome) {
-	for (int i=0; i<ocNames.length; i++) {
-	    if (ocNames[i].equals(outcome))
-		return i;
-	}
-	return -1;
+        for (int i=0; i<ocNames.length; i++) {
+            if (ocNames[i].equals(outcome))
+                return i;
+        }
+        return -1;
     } 
 
     
@@ -196,7 +194,7 @@ public final class GISModel implements MaxentModel {
      * GISModelWriters.  The following values are held in the Object array
      * which is returned by this method:
      *
-     * <li>index 0: cern.colt.map.OpenIntDoubleHashMap[] containing the model
+     * <li>index 0: gnu.trove.TIntDoubleHashMap[] containing the model
      *            parameters  
      * <li>index 1: java.util.Map containing the mapping of model predicates
      *            to unique integers
@@ -211,15 +209,12 @@ public final class GISModel implements MaxentModel {
      * @return An Object[] with the values as described above.
      */
     public final Object[] getDataStructures () {
-	Object[] data = new Object[5];
-	data[0] = params;
-	data[1] = pmap;
-	data[2] = ocNames;
-	data[3] = new Integer(correctionConstant);
-	data[4] = new Double(correctionParam);
-	return data;
+        Object[] data = new Object[5];
+        data[0] = params;
+        data[1] = pmap;
+        data[2] = ocNames;
+        data[3] = new Integer(correctionConstant);
+        data[4] = new Double(correctionParam);
+        return data;
     }
-    
-
-
 }

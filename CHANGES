@@ -1,3 +1,18 @@
+1.2.6
+-----
+Removed Colt dependency in favor of GNU Trove. (Eric)
+
+Refactored index() method in DataIndexer so that only one pass over the
+list of events is needed.  This saves time (of course) and also space,
+since it's no longer necessary to allocate temporary data structures to
+share data between two loops. (Eric)
+
+Refactored sorting/merging algorithm for ComparableEvents so that
+merging can be done in place.  This makes it possible to merge without
+copying duplicate events into sublists and so improves the indexer's
+ability to work on large data sets with a reasonable amount of memory.
+There is still more to be done in this department, however. (Eric)
+
 1.2.4
 -----
 Added options for doing *very* simple smoothing, in which we 'observe'

@@ -24,44 +24,45 @@ import java.util.*;
  * predicates indexes contained in the events.
  *
  * @author      Jason Baldridge
- * @version $Revision: 1.1 $, $Date: 2001/10/23 14:06:53 $
+ * @version $Revision: 1.2 $, $Date: 2001/12/27 19:20:26 $
  */
 public class ComparableEvent implements Comparable {
     public int outcome;
     public int[] predIndexes;
+    public int seen = 1;            // the number of times this event
+                                    // has been seen.
 
     public ComparableEvent(int oc, int[] pids) {
-	outcome = oc;
-	Arrays.sort(pids);
-	predIndexes = pids;
+        outcome = oc;
+        Arrays.sort(pids);
+        predIndexes = pids;
     }
 
     public int compareTo(Object o) {
-	ComparableEvent ce = (ComparableEvent)o;
+        ComparableEvent ce = (ComparableEvent)o;
 
-	if (outcome < ce.outcome) return -1;
-	else if (outcome > ce.outcome) return 1;
+        if (outcome < ce.outcome) return -1;
+        else if (outcome > ce.outcome) return 1;
 	
-	int smallerLength = (predIndexes.length > ce.predIndexes.length?
-			     ce.predIndexes.length : predIndexes.length);
+        int smallerLength = (predIndexes.length > ce.predIndexes.length?
+                             ce.predIndexes.length : predIndexes.length);
 
-	for (int i=0; i<smallerLength; i++) {
-	    if (predIndexes[i] < ce.predIndexes[i]) return -1;
-	    else if (predIndexes[i] > ce.predIndexes[i]) return 1;
-	}
+        for (int i=0; i<smallerLength; i++) {
+            if (predIndexes[i] < ce.predIndexes[i]) return -1;
+            else if (predIndexes[i] > ce.predIndexes[i]) return 1;
+        }
 
 
-	if (predIndexes.length < ce.predIndexes.length) return -1;
-	else if (predIndexes.length > ce.predIndexes.length) return 1;
+        if (predIndexes.length < ce.predIndexes.length) return -1;
+        else if (predIndexes.length > ce.predIndexes.length) return 1;
 
-	return 0;
+        return 0;
     }
 
     public String toString() {
-	String s = "";
-	for (int i=0; i<predIndexes.length; i++) s+= " "+predIndexes[i];
-	return s;
+        String s = "";
+        for (int i=0; i<predIndexes.length; i++) s+= " "+predIndexes[i];
+        return s;
     }
-
 }
  

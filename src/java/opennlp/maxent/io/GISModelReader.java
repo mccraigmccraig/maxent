@@ -17,15 +17,15 @@
 //////////////////////////////////////////////////////////////////////////////   
 package opennlp.maxent.io;
 
+import gnu.trove.*;
 import opennlp.maxent.*;
-import cern.colt.map.*;
 import java.util.StringTokenizer;
 
 /**
  * Abstract parent class for readers of GISModels.
  *
  * @author      Jason Baldridge
- * @version     $Revision: 1.3 $, $Date: 2001/11/15 15:42:14 $
+ * @version     $Revision: 1.4 $, $Date: 2001/12/27 19:20:26 $
  */
 public abstract class GISModelReader {
     /**
@@ -78,7 +78,7 @@ public abstract class GISModelReader {
         String[] outcomeLabels = getOutcomes();
         int[][] outcomePatterns = getOutcomePatterns();
         String[] predLabels = getPredicates();
-        OpenIntDoubleHashMap[] params = getParameters(outcomePatterns);
+        TIntDoubleHashMap[] params = getParameters(outcomePatterns);
  	
         return new GISModel(params,
                             predLabels,
@@ -133,20 +133,20 @@ public abstract class GISModelReader {
         return predLabels;
     }
 
-    protected OpenIntDoubleHashMap[] getParameters (int[][] outcomePatterns)
+    protected TIntDoubleHashMap[] getParameters (int[][] outcomePatterns)
         throws java.io.IOException {
 	
-        OpenIntDoubleHashMap[] params = new OpenIntDoubleHashMap[NUM_PREDS];
+        TIntDoubleHashMap[] params = new TIntDoubleHashMap[NUM_PREDS];
 
         int pid=0;
         for (int i=0; i<outcomePatterns.length; i++) {
             for (int j=0; j<outcomePatterns[i][0]; j++) {
-                params[pid] = new OpenIntDoubleHashMap();
+                params[pid] = new TIntDoubleHashMap();
                 for (int k=1; k<outcomePatterns[i].length; k++) {
                     double d = readDouble();
                     params[pid].put(outcomePatterns[i][k], d);
                 }
-                params[pid].trimToSize();
+                params[pid].compact();
                 pid++;
             }
         }

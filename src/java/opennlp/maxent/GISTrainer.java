@@ -17,9 +17,7 @@
 //////////////////////////////////////////////////////////////////////////////   
 package opennlp.maxent;
 
-import cern.colt.function.*;
-import cern.colt.list.*;
-import cern.colt.map.*;
+import gnu.trove.*;
 
 import java.io.*;
 import java.util.*;
@@ -33,7 +31,7 @@ import java.util.zip.*;
  * and is available at <a href ="ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z"><code>ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z</code></a>. 
  *
  * @author  Jason Baldridge
- * @version $Revision: 1.2 $, $Date: 2001/11/16 10:37:43 $
+ * @version $Revision: 1.3 $, $Date: 2001/12/27 19:20:26 $
  */
 class GISTrainer {
 
@@ -81,16 +79,16 @@ class GISTrainer {
     private String[] predLabels;
 
     // stores the observed expections of each of the events
-    private OpenIntDoubleHashMap[] observedExpects;
+    private TIntDoubleHashMap[] observedExpects;
 
     // stores the estimated parameter value of each predicate during iteration
-    private OpenIntDoubleHashMap[] params;
+    private TIntDoubleHashMap[] params;
 
     // stores the modifiers of the parameter values, paired to params
-    private OpenIntDoubleHashMap[] modifiers;
+    private TIntDoubleHashMap[] modifiers;
 
     // a helper object for storing predicate indexes
-    private IntArrayList predkeys; 
+    private int[] predkeys; 
 
     // a boolean to track if all events have same number of active features
     private boolean needCorrection;
@@ -108,40 +106,40 @@ class GISTrainer {
 
     // stores the value of corrections feature for each event's predicate list,
     // expanded to include all outcomes which might come from those predicates.
-    private OpenIntIntHashMap[] cfvals;
+    private TIntIntHashMap[] cfvals;
 
     // Normalized Probabilities Of Outcomes Given Context: p(a|b_i)
     // Stores the computation of each iterations for the update to the
     // modifiers (and therefore the params)
-    private OpenIntDoubleHashMap[] pabi;
+    private TIntDoubleHashMap[] pabi;
 
-    // make all values in an OpenIntDoubleHashMap return to 0.0
-    private DoubleFunction backToZeros =
-        new DoubleFunction() {
-                public double apply(double arg) { return 0.0; }
+    // make all values in an TIntDoubleHashMap return to 0.0
+    private TDoubleFunction backToZeros =
+        new TDoubleFunction() {
+                public double execute(double arg) { return 0.0; }
             };
 
-    // divide all values in the OpenIntDoubleHashMap pabi[TID] by the sum of
+    // divide all values in the TIntDoubleHashMap pabi[TID] by the sum of
     // all values in the map.
-    private DoubleFunction normalizePABI =
-        new DoubleFunction() {
-                public double apply(double arg) { return arg / PABISUM; }
+    private TDoubleFunction normalizePABI =
+        new TDoubleFunction() {
+                public double execute(double arg) { return arg / PABISUM; }
             };
 
     // add the previous iteration's parameters to the computation of the
     // modifiers of this iteration.
-    private IntDoubleProcedure addParamsToPABI =
-        new IntDoubleProcedure() {
-                public boolean apply(int oid, double arg) {
+    private TIntDoubleProcedure addParamsToPABI =
+        new TIntDoubleProcedure() {
+                public boolean execute(int oid, double arg) {
                     pabi[TID].put(oid, pabi[TID].get(oid) + arg);
                     return true;
                 }
             };
 
     // add the correction parameter and exponentiate it
-    private IntDoubleProcedure addCorrectionToPABIandExponentiate =
-        new IntDoubleProcedure() {
-                public boolean apply(int oid, double arg) {
+    private TIntDoubleProcedure addCorrectionToPABIandExponentiate =
+        new TIntDoubleProcedure() {
+                public boolean execute(int oid, double arg) {
                     if (needCorrection)
                         arg = arg + (correctionParam * cfvals[TID].get(oid));
                     arg = Math.exp(arg);
@@ -152,9 +150,9 @@ class GISTrainer {
             };
 
     // update the modifiers based on the new pabi values
-    private IntDoubleProcedure updateModifiers =
-        new IntDoubleProcedure() {
-                public boolean apply(int oid, double arg) {
+    private TIntDoubleProcedure updateModifiers =
+        new TIntDoubleProcedure() {
+                public boolean execute(int oid, double arg) {
                     modifiers[PID].put(oid,
                                        arg
                                        + (pabi[TID].get(oid)
@@ -164,9 +162,9 @@ class GISTrainer {
             };
 
     // update the params based on the newly computed modifiers
-    private IntDoubleProcedure updateParams =
-        new IntDoubleProcedure() {
-                public boolean apply(int oid, double arg) {
+    private TIntDoubleProcedure updateParams =
+        new TIntDoubleProcedure() {
+                public boolean execute(int oid, double arg) {
                     params[PID].put(oid,
                                     arg
                                     + (constantInverse *
@@ -178,9 +176,9 @@ class GISTrainer {
 
     // update the correction feature modifier, which will then be used to
     // updated the correction parameter
-    private IntDoubleProcedure updateCorrectionFeatureModifier =
-        new IntDoubleProcedure() {
-                public boolean apply(int oid, double arg) {
+    private TIntDoubleProcedure updateCorrectionFeatureModifier =
+        new TIntDoubleProcedure() {
+                public boolean execute(int oid, double arg) {
                     CFMOD +=  arg * cfvals[TID].get(oid) * numTimesEventsSeen[TID];
                     return true;
                 }
@@ -303,14 +301,14 @@ class GISTrainer {
         // the way the model's expectations are approximated in the
         // implementation, this is cancelled out when we compute the next
         // iteration of a parameter, making the extra divisions wasteful.
-        params = new OpenIntDoubleHashMap[numPreds];
-        modifiers = new OpenIntDoubleHashMap[numPreds];
-        observedExpects = new OpenIntDoubleHashMap[numPreds];
+        params = new TIntDoubleHashMap[numPreds];
+        modifiers = new TIntDoubleHashMap[numPreds];
+        observedExpects = new TIntDoubleHashMap[numPreds];
 
 	for (PID=0; PID<numPreds; PID++) {
-	    params[PID] = new OpenIntDoubleHashMap();
-            modifiers[PID] = new OpenIntDoubleHashMap();
-            observedExpects[PID] = new OpenIntDoubleHashMap();
+	    params[PID] = new TIntDoubleHashMap();
+            modifiers[PID] = new TIntDoubleHashMap();
+            observedExpects[PID] = new TIntDoubleHashMap();
             for (OID=0; OID<numOutcomes; OID++) {
                 if (predCount[PID][OID] > 0) {
                     params[PID].put(OID, 0.0);
@@ -323,30 +321,30 @@ class GISTrainer {
                     observedExpects[PID].put(OID, smoothingObservation);
 		}
             }
-            params[PID].trimToSize();
-            modifiers[PID].trimToSize();
-            observedExpects[PID].trimToSize();
+            params[PID].compact();
+            modifiers[PID].compact();
+            observedExpects[PID].compact();
         }
 
         predCount = null; // don't need it anymore
 	
         display("...done.\n");
 
-        pabi = new OpenIntDoubleHashMap[numTokens];
+        pabi = new TIntDoubleHashMap[numTokens];
 
         if (needCorrection) {
             // initialize both the pabi table and the cfvals matrix
             display("Computing correction feature matrix... ");
 	
-            cfvals = new OpenIntIntHashMap[numTokens];
+            cfvals = new TIntIntHashMap[numTokens];
             for (TID=0; TID<numTokens; TID++) {
-                cfvals[TID] = new OpenIntIntHashMap();
-                pabi[TID] = new OpenIntDoubleHashMap();
+                cfvals[TID] = new TIntIntHashMap();
+                pabi[TID] = new TIntDoubleHashMap();
                 for (int j=0; j<contexts[TID].length; j++) {
                     PID = contexts[TID][j];
                     predkeys = params[PID].keys();
-                    for (int i=0; i<predkeys.size(); i++) {
-                        OID = predkeys.get(i);
+                    for (int i=0; i<predkeys.length; i++) {
+                        OID = predkeys[i];
                         if (cfvals[TID].containsKey(OID)) {
                             cfvals[TID].put(OID, cfvals[TID].get(OID) + 1);
                         } else {
@@ -355,14 +353,14 @@ class GISTrainer {
                         }
                     }
                 }
-                cfvals[TID].trimToSize();
-                pabi[TID].trimToSize();
+                cfvals[TID].compact();
+                pabi[TID].compact();
             }
 	
             for (TID=0; TID<numTokens; TID++) {
                 predkeys = cfvals[TID].keys();
-                for (int i=0; i<predkeys.size(); i++) {
-                    OID = predkeys.get(i);
+                for (int i=0; i<predkeys.length; i++) {
+                    OID = predkeys[i];
                     cfvals[TID].put(OID, constant - cfvals[TID].get(OID));
                 }
             }
@@ -380,16 +378,16 @@ class GISTrainer {
         }
         else {
             // initialize just the pabi table
-            pabi = new OpenIntDoubleHashMap[numTokens];
+            pabi = new TIntDoubleHashMap[numTokens];
             for (TID=0; TID<numTokens; TID++) {
-                pabi[TID] = new OpenIntDoubleHashMap();
+                pabi[TID] = new TIntDoubleHashMap();
                 for (int j=0; j<contexts[TID].length; j++) {
                     PID = contexts[TID][j];
                     predkeys = params[PID].keys();
-                    for (int i=0; i<predkeys.size(); i++)
-                        pabi[TID].put(predkeys.get(i), 0.0);
+                    for (int i=0; i<predkeys.length; i++)
+                        pabi[TID].put(predkeys[i], 0.0);
                 }
-                pabi[TID].trimToSize();
+                pabi[TID].compact();
             }
         }
 
@@ -433,17 +431,17 @@ class GISTrainer {
         // compute table probabilities of outcomes given contexts 
         CFMOD = 0.0;
         for (TID=0; TID<numTokens; TID++) {
-            pabi[TID].assign(backToZeros);
+            pabi[TID].transformValues(backToZeros);
 
             for (int j=0; j<contexts[TID].length; j++)
-                params[contexts[TID][j]].forEachPair(addParamsToPABI);
+                params[contexts[TID][j]].forEachEntry(addParamsToPABI);
 
             PABISUM = 0.0; // PABISUM is computed in the next line's procedure
-            pabi[TID].forEachPair(addCorrectionToPABIandExponentiate);
-            if (PABISUM > 0.0) pabi[TID].assign(normalizePABI);
+            pabi[TID].forEachEntry(addCorrectionToPABIandExponentiate);
+            if (PABISUM > 0.0) pabi[TID].transformValues(normalizePABI);
 
             if (needCorrection)
-                pabi[TID].forEachPair(updateCorrectionFeatureModifier);
+                pabi[TID].forEachEntry(updateCorrectionFeatureModifier);
         }
         display(".");
 
@@ -454,15 +452,15 @@ class GISTrainer {
                 // do not remove the next line since we need to know PID
                 // globally for the updateModifiers procedure used after it
                 PID = contexts[TID][j]; 
-                modifiers[PID].forEachPair(updateModifiers);
+                modifiers[PID].forEachEntry(updateModifiers);
             }
         }
         display(".");
 	
         // compute the new parameter values
         for (PID=0; PID<numPreds; PID++) {
-            params[PID].forEachPair(updateParams);
-            modifiers[PID].assign(backToZeros); // re-initialize to 0.0's
+            params[PID].forEachEntry(updateParams);
+            modifiers[PID].transformValues(backToZeros); // re-initialize to 0.0's
         }
 
         if (CFMOD > 0.0) 

@@ -27,7 +27,7 @@ import java.util.*;
  * used by the GIS trainer.
  *
  * @author      Jason Baldridge
- * @version $Revision: 1.4 $, $Date: 2001/11/15 18:08:20 $
+ * @version $Revision: 1.5 $, $Date: 2001/12/27 19:20:26 $
  */
 public class DataIndexer {
     public int[][] contexts;
@@ -82,25 +82,37 @@ public class DataIndexer {
         System.out.println("done.");
 
         System.out.print("Sorting and merging events... ");
+        sortAndMerge(eventsToCompare);
+        System.out.println("Done indexing.");
+    }
+
+    /**
+     * Sorts and uniques the array of comparable events.  This method
+     * will alter the eventsToCompare array -- it does an in place
+     * sort, followed by an in place edit to remove duplicates.
+     *
+     * @param eventsToCompare a <code>ComparableEvent[]</code> value
+     * @since maxent 1.2.6
+     */
+    private void sortAndMerge(ComparableEvent[] eventsToCompare) {
         Arrays.sort(eventsToCompare);
+        int numEvents = eventsToCompare.length;
+        int numUniqueEvents = 1; // assertion: eventsToCompare.length >= 1
+
+        if (eventsToCompare.length <= 1) {
+            return;             // nothing to do; edge case (see assertion)
+        }
 
         ComparableEvent ce = eventsToCompare[0];
-        List uniqueEvents = new ArrayList();
-        List newGroup = new ArrayList();
-        int numEvents = eventsToCompare.length;
-        for (int i=0; i<numEvents; i++) {
+        for (int i=1; i<numEvents; i++) {
             if (ce.compareTo(eventsToCompare[i]) == 0) {
-                newGroup.add(eventsToCompare[i]);
-            } else {	    
-                ce = eventsToCompare[i];
-                uniqueEvents.add(newGroup);
-                newGroup = new ArrayList();
-                newGroup.add(eventsToCompare[i]);
+                ce.seen++;      // increment the seen count
+                eventsToCompare[i] = null; // kill the duplicate
+            } else {
+                ce = eventsToCompare[i]; // a new champion emerges...
+                numUniqueEvents++; // increment the # of unique events
             }
         }
-        uniqueEvents.add(newGroup);
-
-        int numUniqueEvents = uniqueEvents.size();
 
         System.out.println("done. Reduced " + eventsToCompare.length
                            + " events to " + numUniqueEvents + ".");
@@ -109,15 +121,16 @@ public class DataIndexer {
         outcomeList = new int[numUniqueEvents];
         numTimesEventsSeen = new int[numUniqueEvents];
 
-        for (int i=0; i<numUniqueEvents; i++) {
-            List group = (List)uniqueEvents.get(i);
-            numTimesEventsSeen[i] = group.size();
-            ComparableEvent nextCE = (ComparableEvent)group.get(0);
-            outcomeList[i] = nextCE.outcome;
-            contexts[i] = nextCE.predIndexes;
+        for (int i = 0, j = 0; i<numEvents; i++) {
+            ComparableEvent evt = eventsToCompare[i];
+            if (null == evt) {
+                continue;       // this was a dupe, skip over it.
+            }
+            numTimesEventsSeen[j] = evt.seen;
+            outcomeList[j] = evt.outcome;
+            contexts[j] = evt.predIndexes;
+            ++j;
         }
-	
-        System.out.println("Done indexing.");
     }
 
     
@@ -160,9 +173,8 @@ public class DataIndexer {
         int numEvents = events.size();
         int outcomeCount = 0;
         int predCount = 0;
-        int[] uncompressedOutcomeList = new int[numEvents];   
-        List uncompressedContexts = new ArrayList();
-        
+        ComparableEvent[] eventsToCompare = new ComparableEvent[numEvents];
+
         for (int eventIndex=0; eventIndex<numEvents; eventIndex++) {
             Event ev = (Event)events.removeFirst();
             String[] econtext = ev.getContext();
@@ -190,36 +202,49 @@ public class DataIndexer {
                     indexedContext.add(predID);
                 }
             }
-            uncompressedContexts.add(indexedContext);
-            uncompressedOutcomeList[eventIndex] = ocID.intValue();
+            eventsToCompare[eventIndex] =
+                new ComparableEvent(ocID.intValue(),
+                                    toIntArray(indexedContext));
         }
-        outcomeLabels = new String[omap.size()];
-        for (Iterator i=omap.keySet().iterator(); i.hasNext();) {
-            String oc = (String)i.next();
-            outcomeLabels[((Integer)omap.get(oc)).intValue()] = oc;
-        }
-        omap = null;
-	
-        predLabels = new String[pmap.size()];
-        for (Iterator i = pmap.keySet().iterator(); i.hasNext();) {
-            String n = (String)i.next();
-            predLabels[((Integer)pmap.get(n)).intValue()] = n;
-        }
-        pmap = null;
-        
-        ComparableEvent[] eventsToCompare = new ComparableEvent[numEvents];
-
-        for (int i=0; i<numEvents; i++) {
-            List ecLL = (List)uncompressedContexts.get(i);
-            int[] ecInts = new int[ecLL.size()];
-            for (int j=0; j<ecInts.length; j++) {
-                ecInts[j] = ((Integer)ecLL.get(j)).intValue();
-            }
-            eventsToCompare[i] =
-                new ComparableEvent(uncompressedOutcomeList[i], ecInts);
-        }
-
+        outcomeLabels = toIndexedStringArray(omap);
+        predLabels = toIndexedStringArray(pmap);
         return eventsToCompare;
     }
-    
+
+    /**
+     * Utility method for creating a String[] array from a map whose
+     * keys are labels (Strings) to be stored in the array and whose
+     * values are the indices (Integers) at which the corresponding
+     * labels should be inserted.
+     *
+     * @param labelToIndexMap a <code>Map</code> value
+     * @return a <code>String[]</code> value
+     * @since maxent 1.2.6
+     */
+    static String[] toIndexedStringArray(Map labelToIndexMap) {
+        String[] array = new String[labelToIndexMap.size()];
+        for (Iterator i = labelToIndexMap.keySet().iterator(); i.hasNext();) {
+            String label = (String)i.next();
+            int index = ((Integer)labelToIndexMap.get(label)).intValue();
+            array[index] = label;
+        }
+        return array;
+    }
+
+    /**
+     * Utility method for turning a list of Integer objects into a
+     * native array of primitive ints.
+     *
+     * @param integers a <code>List</code> value
+     * @return an <code>int[]</code> value
+     * @since maxent 1.2.6
+     */
+    static final int[] toIntArray(List integers) {
+        int[] rv = new int[integers.size()];
+        int i = 0;
+        for (Iterator it = integers.iterator(); it.hasNext();) {
+            rv[i++] = ((Integer)it.next()).intValue();
+        }
+        return rv;
+    }
 }

@@ -1,4 +1,4 @@
-<!-- $Id: build.xml,v 1.11 2001/11/22 15:07:05 jasonbaldridge Exp $ -->
+<!-- $Id: build.xml,v 1.12 2001/12/27 19:20:26 ericdf Exp $ -->
 
 <project default="package" basedir=".">
 
@@ -16,7 +16,7 @@
 
     <property name="build.compiler" value="classic"/>
     <property name="debug" value="on"/>
-    <property name="optimize" value="on"/>
+    <property name="optimize" value="off"/>
     <property name="deprecation" value="on"/>
 
     <property name="src.dir" value="./src/java"/>
@@ -41,7 +41,6 @@
 
     <path id="build.classpath">
       <pathelement location="${lib.dir}/java-getopt.jar"/>
-      <pathelement location="${lib.dir}/colt.jar"/>
       <pathelement location="${lib.dir}/trove.jar"/>
     </path>
 
@@ -124,7 +123,6 @@
       <mergefiles>
         <pathelement path="${build.dir}/${name}-${DSTAMP}.jar"/>
 	<pathelement location="${lib.dir}/java-getopt.jar"/>
-	<pathelement location="${lib.dir}/colt.jar"/>
 	<pathelement location="${lib.dir}/trove.jar"/>
       </mergefiles>
       <addfiles>
