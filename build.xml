@@ -1,4 +1,4 @@
-<!-- $Id: build.xml,v 1.5 2001/10/28 01:33:35 ericdf Exp $ -->
+<!-- $Id: build.xml,v 1.6 2001/11/06 15:04:59 jasonbaldridge Exp $ -->
 
 <project default="package" basedir=".">
 
@@ -9,7 +9,7 @@
     <tstamp/>
     <property name="Name" value="Maxent"/>
     <property name="name" value="maxent"/>
-    <property name="version" value="1.2.1"/>
+    <property name="version" value="1.2.2"/>
     <property name="year" value="2001"/>
 
     <echo message="----------- ${Name} ${version} [${year}] ------------"/>
@@ -111,6 +111,24 @@
     <jar jarfile="${build.dir}/${name}-${version}.jar"
          basedir="${build.dest}" />
 
+  </target>
+
+
+  <!-- =================================================================== -->
+  <!-- Creates Jar file with all other needed jars built in.               -->
+  <!-- =================================================================== -->
+  <target name="exe" depends="compile">
+    <jar jarfile="${build.dir}/${name}-${DSTAMP}.jar"
+         basedir="${build.dest}" />
+    <jlink outfile="${build.dir}/${name}-exe-${version}.jar">
+      <mergefiles>
+        <pathelement path="${build.dir}/${name}-${DSTAMP}.jar"/>
+        <pathelement location="${lib.dir}/gnu-regexp.jar"/>
+	<pathelement location="${lib.dir}/java-getopt.jar"/>
+	<pathelement location="${lib.dir}/colt.jar"/>
+      </mergefiles>
+    </jlink>
+    <delete file="${build.dir}/${name}-${DSTAMP}.jar" />
   </target>
 
 
