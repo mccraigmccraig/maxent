@@ -27,7 +27,7 @@ import java.util.*;
  * used by the GIS trainer.
  *
  * @author      Jason Baldridge
- * @version $Revision: 1.6 $, $Date: 2002/01/02 20:00:39 $
+ * @version $Revision: 1.7 $, $Date: 2002/01/03 14:34:29 $
  */
 public class DataIndexer {
     public int[][] contexts;
@@ -197,8 +197,12 @@ public class DataIndexer {
                     indexedContext.add(predicateIndex.get(pred));
                 }
             }
-            eventsToCompare[eventIndex] =
-                new ComparableEvent(ocID, indexedContext.toNativeArray());
+
+            // drop events with no active features
+            if (indexedContext.size() > 0) {
+                eventsToCompare[eventIndex] =
+                    new ComparableEvent(ocID, indexedContext.toNativeArray());
+            }
             // recycle the TIntArrayList
             indexedContext.resetQuick();
         }
