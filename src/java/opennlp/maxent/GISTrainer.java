@@ -27,7 +27,7 @@ import gnu.trove.*;
  * and is available at <a href ="ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z"><code>ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z</code></a>. 
  *
  * @author  Jason Baldridge
- * @version $Revision: 1.10 $, $Date: 2003/04/05 13:33:38 $
+ * @version $Revision: 1.11 $, $Date: 2003/12/13 16:41:29 $
  */
 class GISTrainer {
 
@@ -60,6 +60,8 @@ class GISTrainer {
 
     // records the array of outcomes seen in each event
     private int[] outcomes; 
+    
+    private int[] outcomeList;
 
     // records the num of times an event has been seen, paired to
     // int[][] contexts
@@ -184,6 +186,13 @@ class GISTrainer {
     public void setSmoothingObservation (double timesSeen) {
 	_smoothingObservation = timesSeen;
     }
+    
+  public GISModel trainModel(EventStream eventStream,
+                                 int iterations,
+                                 int cutoff) {
+        return trainModel(iterations,new OnePassDataIndexer(eventStream, cutoff));                           
+  }
+
 
     /**
      * Train a model using the GIS algorithm.
@@ -193,20 +202,16 @@ class GISTrainer {
      * @param iterations  The number of GIS iterations to perform.
      * @param cutoff      The number of times a predicate must be seen in order
      *                    to be relevant for training.
+     * @param di The data indexer used to compress events in memory.
      * @return The newly trained model, which can be used immediately or saved
      *         to disk using an opennlp.maxent.io.GISModelWriter object.
      */
-    public GISModel trainModel(EventStream eventStream,
-                               int iterations,
-                               int cutoff) {
-
-        DataIndexer di = new DataIndexer(eventStream, cutoff);
-	
+    public GISModel trainModel(int iterations,DataIndexer di) {
         /************** Incorporate all of the needed info ******************/
         display("Incorporating indexed data for training...  \n");
-        contexts = di.contexts;
-	outcomes = di.outcomeList;
-        numTimesEventsSeen = di.numTimesEventsSeen;
+        contexts = di.getContexts();
+	outcomes = di.getOutcomeList();
+        numTimesEventsSeen = di.getNumTimesEventsSeen();
         numTokens = contexts.length;
 	
         //printTable(contexts);
@@ -223,11 +228,12 @@ class GISTrainer {
 	
 	display("done.\n");
 
-        outcomeLabels = di.outcomeLabels;
+        outcomeLabels = di.getOutcomeLabels();
+        outcomeList = di.getOutcomeList();
         numOutcomes = outcomeLabels.length;
 	iprob = Math.log(1.0/numOutcomes);
 
-        predLabels = di.predLabels;
+        predLabels = di.getPredLabels();
         numPreds = predLabels.length;
 	
         display("\tNumber of Event Tokens: " + numTokens +"\n");
@@ -238,7 +244,7 @@ class GISTrainer {
         int[][] predCount = new int[numPreds][numOutcomes];
         for (TID=0; TID<numTokens; TID++)
             for (int j=0; j<contexts[TID].length; j++)
-                predCount[contexts[TID][j]][di.outcomeList[TID]]
+                predCount[contexts[TID][j]][outcomeList[TID]]
                     += numTimesEventsSeen[TID];
 
         //printTable(predCount);
