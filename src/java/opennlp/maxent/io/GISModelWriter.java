@@ -18,6 +18,7 @@
 package opennlp.maxent.io;
 
 import opennlp.maxent.*;
+import gnu.trove.*;
 import cern.colt.list.*;
 import cern.colt.map.*;
 import java.io.*;
@@ -29,7 +30,7 @@ import java.util.*;
  * extending class to define precisely how the data should be stored.
  *
  * @author      Jason Baldridge
- * @version     $Revision: 1.2 $, $Date: 2001/11/15 15:42:14 $
+ * @version     $Revision: 1.3 $, $Date: 2001/11/15 16:18:40 $
  */
 public abstract class GISModelWriter {
     protected OpenIntDoubleHashMap[] PARAMS;
@@ -43,16 +44,18 @@ public abstract class GISModelWriter {
     	Object[] data = model.getDataStructures();
 
 	PARAMS = (OpenIntDoubleHashMap[])data[0];
-	Map pmap = (Map)data[1];
+	TObjectIntHashMap pmap = (TObjectIntHashMap)data[1];
 	OUTCOME_LABELS = (String[])data[2];
 	CORRECTION_CONSTANT = ((Integer)data[3]).intValue();
 	CORRECTION_PARAM = ((Double)data[4]).doubleValue();
 
 	PRED_LABELS = new String[pmap.size()];
-	for (Iterator i=pmap.keySet().iterator(); i.hasNext();) {
-	    String pred = (String)i.next();
-	    PRED_LABELS[((Integer)pmap.get(pred)).intValue()] = pred;
-	}
+	pmap.forEachEntry(new TObjectIntProcedure() {
+	    public boolean execute (Object pred, int index) {
+		PRED_LABELS[index] = (String)pred;
+		return true;
+	    }
+	});
     }
 
     protected abstract void writeUTF (String s) throws java.io.IOException;

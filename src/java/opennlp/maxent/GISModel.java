@@ -27,11 +27,11 @@ import java.util.*;
  * Iterative Scaling procedure (implemented in GIS.java).
  *
  * @author      Tom Morton and Jason Baldridge
- * @version     $Revision: 1.3 $, $Date: 2001/11/15 15:42:14 $
+ * @version     $Revision: 1.4 $, $Date: 2001/11/15 16:18:40 $
  */
 public final class GISModel implements MaxentModel {
     private final OpenIntDoubleHashMap[] params;
-    private final Map pmap;
+    private final TObjectIntHashMap pmap;
     private final String[] ocNames;
     private final int correctionConstant;
     private final double correctionParam;
@@ -46,9 +46,9 @@ public final class GISModel implements MaxentModel {
 		     int _correctionConstant,
 		     double _correctionParam) {
 
-	pmap = new THashMap(predLabels.length);
+	pmap = new TObjectIntHashMap(predLabels.length);
 	for (int i=0; i<predLabels.length; i++)
-	    pmap.put(predLabels[i], new Integer(i));
+	    pmap.put(predLabels[i], i);
 
 	params = _params;
 	ocNames =  _ocNames;
@@ -88,7 +88,7 @@ public final class GISModel implements MaxentModel {
 	for (int i=0; i<context.length; i++) {
 	    if (pmap.containsKey(context[i])) {
 		OpenIntDoubleHashMap predParams =
-		    params[((Integer)pmap.get(context[i])).intValue()];
+		    params[pmap.get(context[i])];
 		predParams.keys(activeOutcomes);
 		for (int j=0; j<activeOutcomes.size(); j++) {
 		    int oid = activeOutcomes.getQuick(j);
