@@ -17,9 +17,13 @@
 //////////////////////////////////////////////////////////////////////////////   
 package opennlp.maxent.io;
 
-import gnu.trove.*;
-import java.io.*;
-import java.util.zip.*;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.zip.GZIPInputStream;
+
+import opennlp.maxent.TIntParamHashMap;
 
 /**
  * A reader for GIS models stored in the format used in v1.0 of Maxent. It
@@ -28,7 +32,7 @@ import java.util.zip.*;
  * which stores the parameters.
  *
  * @author      Jason Baldridge
- * @version     $Revision: 1.2 $, $Date: 2001/12/27 19:20:26 $
+ * @version     $Revision: 1.3 $, $Date: 2004/06/11 20:51:36 $
  */
 public class OldFormatGISModelReader extends PlainTextGISModelReader {
     DataInputStream paramsInput;
@@ -44,15 +48,15 @@ public class OldFormatGISModelReader extends PlainTextGISModelReader {
 		          new FileInputStream(modelname+".mep.gz")));
     }
 
-    protected TIntDoubleHashMap[] getParameters (int[][] outcomePatterns)
+    protected TIntParamHashMap[] getParameters (int[][] outcomePatterns)
         throws java.io.IOException {
 	
-        TIntDoubleHashMap[] params = new TIntDoubleHashMap[NUM_PREDS];
+        TIntParamHashMap[] params = new TIntParamHashMap[NUM_PREDS];
 	  
         int pid=0;
         for (int i=0; i<outcomePatterns.length; i++) {
             for (int j=0; j<outcomePatterns[i][0]; j++) {
-                params[pid] = new TIntDoubleHashMap();
+                params[pid] = new TIntParamHashMap();
                 for (int k=1; k<outcomePatterns[i].length; k++) {
                     double d = paramsInput.readDouble();
                     params[pid].put(outcomePatterns[i][k], d);

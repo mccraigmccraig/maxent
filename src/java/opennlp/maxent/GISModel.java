@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// Copyright (C) 2001 Jason Baldridge and Gann Bierner
+// Copyright (C) 2004 Jason Baldridge, Gann Bierner, and Tom Morton
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -17,7 +17,6 @@
 //////////////////////////////////////////////////////////////////////////////   
 package opennlp.maxent;
 
-import gnu.trove.*;
 import java.text.DecimalFormat;
 
 /**
@@ -25,15 +24,19 @@ import java.text.DecimalFormat;
  * Iterative Scaling procedure (implemented in GIS.java).
  *
  * @author      Tom Morton and Jason Baldridge
- * @version     $Revision: 1.12 $, $Date: 2003/12/09 23:13:53 $
+ * @version     $Revision: 1.13 $, $Date: 2004/06/11 20:51:44 $
  */
 public final class GISModel implements MaxentModel {
-    private final TIntDoubleHashMap[] params;
-    private final TObjectIntHashMap pmap;
+  	/** Mapping between outcomes and paramater values for each context. 
+  	 * The integer representation of the context can be found using <code>pmap</code>.*/
+    private final TIntParamHashMap[] params;
+    /** Maping between predicates/contexts and an integer representing them. */
+    private final TObjectIndexHashMap pmap;
+    /** The names of the outcomes. */
     private final String[] ocNames;
     private final double correctionConstant;
     private final double correctionParam;
-
+    /** The number of outcomes. */
     private final int numOutcomes;
     private final double iprob;
     private final double fval;
@@ -41,13 +44,13 @@ public final class GISModel implements MaxentModel {
 
     private int[] numfeats;
     
-    public GISModel (TIntDoubleHashMap[] _params,
+    public GISModel (TIntParamHashMap[] _params,
                      String[] predLabels,
                      String[] _ocNames,
                      int _correctionConstant,
                      double _correctionParam) {
 
-        pmap = new TObjectIntHashMap(predLabels.length);
+        pmap = new TObjectIndexHashMap(predLabels.length);
         for (int i=0; i<predLabels.length; i++)
             pmap.put(predLabels[i], i);
 
@@ -89,32 +92,31 @@ public final class GISModel implements MaxentModel {
      *                context. The indexes of the double[] are the outcome
      *                ids, and the actual string representation of the
      *                outcomes can be obtained from the method
-     *  	      getOutcome(int i).
+     *                getOutcome(int i).
      */
     public final double[] eval(String[] context, double[] outsums) {
-	int[] activeOutcomes;
-	for (int oid=0; oid<numOutcomes; oid++) {
+        int[] activeOutcomes;
+        for (int oid=0; oid<numOutcomes; oid++) {
             outsums[oid] = iprob;
             numfeats[oid] = 0;
         }
         for (int i=0; i<context.length; i++) {
-	  if (pmap.containsKey(context[i])) {
-	    TIntDoubleHashMap predParams =
-	      params[pmap.get(context[i])];
-	    activeOutcomes = predParams.keys();
-	    for (int j=0; j<activeOutcomes.length; j++) {
-	      int oid = activeOutcomes[j];
-	      numfeats[oid]++;
-	      outsums[oid] += fval * predParams.get(oid);
-	    }
-	  }
+            int contextIndex = pmap.get(context[i]);
+            if (contextIndex >= 0) {
+                TIntParamHashMap predParams = params[contextIndex];
+                activeOutcomes = predParams.keys();
+                for (int j=0; j<activeOutcomes.length; j++) {
+	                int oid = activeOutcomes[j];
+	                numfeats[oid]++;
+	                outsums[oid] += predParams.get(oid);
+                }
+            }
         }
 
         double normal = 0.0;
         for (int oid=0; oid<numOutcomes; oid++) {
-            outsums[oid] = Math.exp(outsums[oid]
-                                    + ((1.0 -
-                                        (numfeats[oid]/correctionConstant))
+            outsums[oid] = Math.exp((outsums[oid]*fval)
+                                    + ((1.0 -(numfeats[oid]/correctionConstant))
                                        * correctionParam));
             normal += outsums[oid];
         }

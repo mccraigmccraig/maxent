@@ -17,15 +17,16 @@
 //////////////////////////////////////////////////////////////////////////////   
 package opennlp.maxent.io;
 
-import gnu.trove.*;
-import opennlp.maxent.*;
 import java.util.StringTokenizer;
+
+import opennlp.maxent.GISModel;
+import opennlp.maxent.TIntParamHashMap;
 
 /**
  * Abstract parent class for readers of GISModels.
  *
  * @author      Jason Baldridge
- * @version     $Revision: 1.4 $, $Date: 2001/12/27 19:20:26 $
+ * @version     $Revision: 1.5 $, $Date: 2004/06/11 20:51:36 $
  */
 public abstract class GISModelReader {
     /**
@@ -78,7 +79,7 @@ public abstract class GISModelReader {
         String[] outcomeLabels = getOutcomes();
         int[][] outcomePatterns = getOutcomePatterns();
         String[] predLabels = getPredicates();
-        TIntDoubleHashMap[] params = getParameters(outcomePatterns);
+        TIntParamHashMap[] params = getParameters(outcomePatterns);
  	
         return new GISModel(params,
                             predLabels,
@@ -133,15 +134,15 @@ public abstract class GISModelReader {
         return predLabels;
     }
 
-    protected TIntDoubleHashMap[] getParameters (int[][] outcomePatterns)
+    protected TIntParamHashMap[] getParameters (int[][] outcomePatterns)
         throws java.io.IOException {
 	
-        TIntDoubleHashMap[] params = new TIntDoubleHashMap[NUM_PREDS];
+        TIntParamHashMap[] params = new TIntParamHashMap[NUM_PREDS];
 
         int pid=0;
         for (int i=0; i<outcomePatterns.length; i++) {
             for (int j=0; j<outcomePatterns[i][0]; j++) {
-                params[pid] = new TIntDoubleHashMap();
+                params[pid] = new TIntParamHashMap();
                 for (int k=1; k<outcomePatterns[i].length; k++) {
                     double d = readDouble();
                     params[pid].put(outcomePatterns[i][k], d);

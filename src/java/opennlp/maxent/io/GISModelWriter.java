@@ -28,10 +28,10 @@ import java.util.*;
  * extending class to define precisely how the data should be stored.
  *
  * @author      Jason Baldridge
- * @version     $Revision: 1.4 $, $Date: 2001/12/27 19:20:26 $
+ * @version     $Revision: 1.5 $, $Date: 2004/06/11 20:51:36 $
  */
 public abstract class GISModelWriter {
-    protected TIntDoubleHashMap[] PARAMS;
+    protected TIntParamHashMap[] PARAMS;
     protected String[] OUTCOME_LABELS;
     protected int CORRECTION_CONSTANT;
     protected double CORRECTION_PARAM;
@@ -41,7 +41,7 @@ public abstract class GISModelWriter {
 
     	Object[] data = model.getDataStructures();
 
-	PARAMS = (TIntDoubleHashMap[])data[0];
+	PARAMS = (TIntParamHashMap[])data[0];
 	TObjectIntHashMap pmap = (TObjectIntHashMap)data[1];
 	OUTCOME_LABELS = (String[])data[2];
 	CORRECTION_CONSTANT = ((Integer)data[3]).intValue();

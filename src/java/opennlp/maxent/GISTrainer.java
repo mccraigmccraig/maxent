@@ -26,7 +26,7 @@ import gnu.trove.*;
  * and is available at <a href ="ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z"><code>ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z</code></a>. 
  *
  * @author  Jason Baldridge
- * @version $Revision: 1.13 $, $Date: 2004/05/10 03:11:54 $
+ * @version $Revision: 1.14 $, $Date: 2004/06/11 20:51:37 $
  */
 class GISTrainer {
 
@@ -57,9 +57,6 @@ class GISTrainer {
   /** A global index variable for Outcomes. */
   private int OID;
 
-  /** A global variable for adding probabilities in an array.*/
-  private double SUM;
-
   /** Records the array of predicates seen in each event. */
   private int[][] contexts;
 
@@ -85,16 +82,14 @@ class GISTrainer {
   private String[] predLabels;
 
   /** Stores the observed expected values of the features based on training data. */
-  private TIntDoubleHashMap[] observedExpects;
+  private TIntParamHashMap[] observedExpects;
 
   /** Stores the estimated parameter value of each predicate during iteration */
-  private TIntDoubleHashMap[] params;
+  private TIntParamHashMap[] params;
 
   /** Stores the expected values of the features based on the current models */
-  private TIntDoubleHashMap[] modelExpects;
+  private TIntParamHashMap[] modelExpects;
 
-  /** A helper object for storing predicate indexes. */
-  private int[] predkeys;
 
   /** The maximum number of feattures fired in an event. Usually refered to a C.*/
   private int constant;
@@ -280,9 +275,9 @@ class GISTrainer {
     // the way the model's expectations are approximated in the
     // implementation, this is cancelled out when we compute the next
     // iteration of a parameter, making the extra divisions wasteful.
-    params = new TIntDoubleHashMap[numPreds];
-    modelExpects = new TIntDoubleHashMap[numPreds];
-    observedExpects = new TIntDoubleHashMap[numPreds];
+    params = new TIntParamHashMap[numPreds];
+    modelExpects = new TIntParamHashMap[numPreds];
+    observedExpects = new TIntParamHashMap[numPreds];
 
     int initialCapacity;
     float loadFactor = (float) 0.9;
@@ -297,9 +292,9 @@ class GISTrainer {
       initialCapacity = (int) numOutcomes / 2;
     }
     for (PID = 0; PID < numPreds; PID++) {
-      params[PID] = new TIntDoubleHashMap(initialCapacity, loadFactor);
-      modelExpects[PID] = new TIntDoubleHashMap(initialCapacity, loadFactor);
-      observedExpects[PID] = new TIntDoubleHashMap(initialCapacity, loadFactor);
+      params[PID] = new TIntParamHashMap(initialCapacity, loadFactor);
+      modelExpects[PID] = new TIntParamHashMap(initialCapacity, loadFactor);
+      observedExpects[PID] = new TIntParamHashMap(initialCapacity, loadFactor);
       for (OID = 0; OID < numOutcomes; OID++) {
         if (predCount[PID][OID] > 0) {
           params[PID].put(OID, 0.0);
@@ -405,7 +400,7 @@ class GISTrainer {
     }
     int[] activeOutcomes;
     for (int i = 0; i < context.length; i++) {
-      TIntDoubleHashMap predParams = params[context[i]];
+      TIntParamHashMap predParams = params[context[i]];
       activeOutcomes = predParams.keys();
       for (int j = 0; j < activeOutcomes.length; j++) {
         int oid = activeOutcomes[j];
