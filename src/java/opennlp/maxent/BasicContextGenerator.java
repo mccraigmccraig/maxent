@@ -22,14 +22,14 @@ import java.util.*;
 /**
  * Generate contexts for maxent decisions, assuming that the input
  * given to the getContext() method is a String containing contextual
- * predicates separated by spaces, e.g:
- * 
+ * predicates separated by spaces. 
+ * e.g:
  * <p>
  * cp_1 cp_2 ... cp_n
  * </p>
  * 
  * @author      Jason Baldridge
- * @version     $Revision: 1.2 $, $Date: 2002/04/30 08:48:35 $
+ * @version     $Revision: 1.3 $, $Date: 2004/05/10 03:11:54 $
  */
 public class BasicContextGenerator implements ContextGenerator {
 

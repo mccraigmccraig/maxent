@@ -21,12 +21,13 @@ package opennlp.maxent;
  * A object which can deliver a stream of training events assuming
  * that each event is represented as a space separated list containing
  * all the contextual predicates, with the last item being the
- * outcome, e.g.: 
+ * outcome.
+ * e.g.: 
  *
  * <p> cp_1 cp_2 ... cp_n outcome
  *
  * @author      Jason Baldridge
- * @version $Revision: 1.1 $, $Date: 2001/11/20 17:05:37 $ 
+ * @version $Revision: 1.2 $, $Date: 2004/05/10 03:11:54 $ 
 */
 public class BasicEventStream implements EventStream {
     ContextGenerator _cg = new BasicContextGenerator();

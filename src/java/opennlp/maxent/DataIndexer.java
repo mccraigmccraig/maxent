@@ -20,9 +20,35 @@ package opennlp.maxent;
 /** Object which compresses events in memory and performs feature selection.
  */
 public interface DataIndexer {
+  /**
+   * Returns the array of predicates seen in each event. 
+   * @return a 2-D array whose first dimenstion is the event index and array this refers to contains
+   * the contexts for that event. 
+   */
   public int[][] getContexts();
+  
+  /**
+   * Returns an array indicating the number of times a particular event was seen.
+   * @return an array indexed by the event index indicating the number of times a particular event was seen.
+   */
   public int[] getNumTimesEventsSeen();
+  
+  /**
+   * Returns an array indicating the number of outcomes found with a particular event.
+   * @return an array indexed by event index  indicating the number of outcomes found with a particular event.
+   */
   public int[] getOutcomeList();
+  
+  /**
+   * Returns an array of predicate/context names.
+   * @return an array of predicate/context names indexed by context index.  These indices are the
+   * value of the array returned by <code>getContexts</code>.
+   */
   public String[] getPredLabels();
+  
+  /**
+    * Returns an array of outcome names.
+    * @return an array of outcome names indexed by outcome index.
+    */
   public String[] getOutcomeLabels(); 
 }

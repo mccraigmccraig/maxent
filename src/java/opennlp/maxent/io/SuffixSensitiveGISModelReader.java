@@ -30,7 +30,7 @@ import java.util.zip.*;
  *    <li>.bin --> the file is binary
  *
  * @author      Jason Baldridge
- * @version     $Revision: 1.1 $, $Date: 2001/10/23 14:06:53 $
+ * @version     $Revision: 1.2 $, $Date: 2004/05/10 03:11:54 $
  */
 public class SuffixSensitiveGISModelReader extends GISModelReader {
     private final GISModelReader suffixAppropriateReader;
@@ -95,7 +95,7 @@ public class SuffixSensitiveGISModelReader extends GISModelReader {
     }
 
     /**
-     * To convert between different formats of the new style:
+     * To convert between different formats of the new style.
      * 
      * <p>java opennlp.maxent.io.SuffixSensitiveGISModelReader old_model_name new_model_name
      * 
