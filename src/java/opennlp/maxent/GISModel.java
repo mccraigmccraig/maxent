@@ -27,7 +27,7 @@ import java.util.*;
  * Iterative Scaling procedure (implemented in GIS.java).
  *
  * @author      Tom Morton and Jason Baldridge
- * @version     $Revision: 1.4 $, $Date: 2001/11/15 16:18:40 $
+ * @version     $Revision: 1.5 $, $Date: 2001/11/30 14:33:28 $
  */
 public final class GISModel implements MaxentModel {
     private final OpenIntDoubleHashMap[] params;
@@ -173,6 +173,21 @@ public final class GISModel implements MaxentModel {
 	return ocNames[i];
     }
 
+    /**
+     * Gets the index associated with the String name of the given outcome.
+     *
+     * @param outcome the String name of the outcome for which the
+     *          index is desired
+     * @return the index if the given outcome label exists for this
+     * model, -1 if it does not.
+     **/
+    public int getIndex (String outcome) {
+	for (int i=0; i<ocNames.length; i++) {
+	    if (ocNames[i].equals(outcome))
+		return i;
+	}
+	return -1;
+    } 
 
     
     /**

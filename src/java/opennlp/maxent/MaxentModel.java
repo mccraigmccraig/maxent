@@ -9,7 +9,7 @@
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
+// GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this program; if not, write to the Free Software
@@ -21,8 +21,8 @@ package opennlp.maxent;
  * Interface for maximum entropy models.
  *
  * @author      Jason Baldridge
- * @version     $Revision: 1.2 $, $Date: 2001/11/06 15:03:49 $
- */
+ * @version     $Revision: 1.3 $, $Date: 2001/11/30 14:33:29 $
+ **/
 public interface MaxentModel {
 
     /**
@@ -33,7 +33,7 @@ public interface MaxentModel {
      * @return an array of the probabilities for each of the different
      *         outcomes, all of which sum to 1.
      *
-     */
+     **/
     public double[] eval (String[] context);
 
     /**
@@ -44,15 +44,14 @@ public interface MaxentModel {
      *            <code>eval(String[] context)</code>
      *            method.
      * @return the String name of the best outcome
-     *
-     */
+     **/
     public String getBestOutcome (double[] outcomes);
 
 
     /**
      * Return a string matching all the outcome names with all the
-     * probabilities produced by the <code>eval(String[] context)</code>
-     * method.
+     * probabilities produced by the <code>eval(String[]
+     * context)</code> method.
      *
      * @param outcomes A <code>double[]</code> as returned by the
      *            <code>eval(String[] context)</code>
@@ -60,19 +59,36 @@ public interface MaxentModel {
      * @return    String containing outcome names paired with the normalized
      *            probability (contained in the <code>double[] ocs</code>)
      *            for each one.
-     */    
+     **/    
     public String getAllOutcomes (double[] outcomes);
 
 	
     /**
-     * Gets the String name of the outcome associated with the index i.
+     * Gets the String name of the outcome associated with the index
+     * i.
      *
      * @param i the index for which the name of the associated outcome is
      *          desired.
      * @return the String name of the outcome
-     */
+     **/
     public String getOutcome (int i);
 
+
+    /**
+     * Gets the index associated with the String name of the given
+     * outcome.
+     *
+     * @param outcome the String name of the outcome for which the
+     *          index is desired
+     * @return the index if the given outcome label exists for this
+     * model, -1 if it does not.
+     **/
+    public int getIndex (String outcome);
+
+
+    /**
+     * Returns the data structures relevant to storing the model.
+     **/
     public Object[] getDataStructures ();
     
 }
