@@ -31,7 +31,7 @@ import java.util.zip.*;
  * and is available at <a href ="ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z"><code>ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z</code></a>. 
  *
  * @author  Jason Baldridge
- * @version $Revision: 1.8 $, $Date: 2003/01/02 14:46:30 $
+ * @version $Revision: 1.9 $, $Date: 2003/01/08 15:44:47 $
  */
 class GISTrainer {
 
@@ -215,36 +215,18 @@ class GISTrainer {
 	
         //printTable(contexts);
 
-	// a boolean to track if all events have same number of active features
-        boolean needCorrection = false; 
-
-        // determine the correction constant and its inverse, and check to see
-        // whether we need the correction features
+        // determine the correction constant and its inverse
         constant = contexts[0].length;
         for (TID=1; TID<contexts.length; TID++) {
-            if (contexts[TID].length < constant) {
-                needCorrection = true;
-            }
-            else if (contexts[TID].length > constant) {
-                needCorrection = true;
-                constant = contexts[TID].length;
+            if (contexts[TID].length > constant) {
+	      constant = contexts[TID].length;
             }
         }
+        constantInverse = 1.0/constant;
 	
-	int cfvalSum = 0;
-	for (TID=0; TID<numTokens; TID++)
-	  cfvalSum += (constant - contexts[TID].length)
-	    * numTimesEventsSeen[TID];
-	if (cfvalSum == 0) {
-	  cfObservedExpect = Math.log(NEAR_ZERO);//nearly zero so log is defined
-	}
-	else {
-	  cfObservedExpect = Math.log(cfvalSum);
-	}
 	
 	display("done.\n");
 
-        constantInverse = 1.0/constant;
         outcomeLabels = di.outcomeLabels;
         numOutcomes = outcomeLabels.length;
 	iprob = Math.log(1.0/numOutcomes);
@@ -264,8 +246,8 @@ class GISTrainer {
                     += numTimesEventsSeen[TID];
 
         //printTable(predCount);
-
         di = null; // don't need it anymore
+
 
 	// A fake "observation" to cover features which are not detected in
 	// the data.  The default is to assume that we observed "1/10th" of a
@@ -306,13 +288,33 @@ class GISTrainer {
 		else if (_simpleSmoothing) {
                     params[PID].put(OID, 0.0);
                     modifiers[PID].put(OID, 0.0);
-                    observedExpects[PID].put(OID, smoothingObservation);
+                    observedExpects[PID].put(OID, logSmoothingObservation);
 		}
             }
             params[PID].compact();
             modifiers[PID].compact();
             observedExpects[PID].compact();
         }
+
+	// compute the expected value of correction
+	int cfvalSum = 0;
+	for (TID=0; TID<numTokens; TID++) {
+	  for (int j=0; j<contexts[TID].length; j++) {
+	    PID = contexts[TID][j];
+	    if (!modifiers[PID].containsKey(outcomes[TID])) {
+	      cfvalSum+=numTimesEventsSeen[TID];
+	    }
+	  }
+	  cfvalSum += (constant - contexts[TID].length)
+	    * numTimesEventsSeen[TID];
+	}
+	if (cfvalSum == 0) {
+	  cfObservedExpect = Math.log(NEAR_ZERO);//nearly zero so log is defined
+	}
+	else {
+	  cfObservedExpect = Math.log(cfvalSum);
+	}
+
 	correctionParam = 0.0;
         predCount = null; // don't need it anymore
 	
@@ -337,8 +339,8 @@ class GISTrainer {
     
     /* Estimate and return the model parameters. */
     private void findParameters(int iterations) {
-      double prevLL = 0.0;
-      double currLL = 0.0;
+        double prevLL = 0.0;
+        double currLL = 0.0;
         display("Performing " + iterations + " iterations.\n");
         for (int i=1; i<=iterations; i++) {
             if (i<10) display("  " + i + ":  ");
@@ -346,13 +348,13 @@ class GISTrainer {
             else display(i + ":  ");
             currLL=nextIteration();
 	    if (i > 1) {
-	      if (prevLL > currLL) {
-		System.err.println("Model Diverging: loglikelihood decreased");
-		break;
-	      }
-	      if (currLL-prevLL < LLThreshold) {
-		break;
-	      }
+	        if (prevLL > currLL) {
+		    System.err.println("Model Diverging: loglikelihood decreased");
+		    break;
+	        }
+	        if (currLL-prevLL < LLThreshold) {
+		    break;
+	        }
 	    }
 	    prevLL=currLL;
         }
@@ -414,8 +416,9 @@ class GISTrainer {
         // correction parameter
         double loglikelihood = 0.0; 
         CFMOD=0.0;
+	int numEvents=0;
         for (TID=0; TID<numTokens; TID++) {
-	  // modeldistribution and PID are globals used in 
+	  // TID, modeldistribution and PID are globals used in 
 	  // the updateModifiers procedure.  They need to be set.
 	  eval(contexts[TID],modelDistribution);
 	  for (int j=0; j<contexts[TID].length; j++) {
@@ -426,9 +429,11 @@ class GISTrainer {
 		CFMOD+=modelDistribution[OID]*numTimesEventsSeen[TID];
 	      }
 	    }
-	    loglikelihood+=Math.log(modelDistribution[outcomes[TID]]);
 	  }
-	  CFMOD+=constant-contexts[TID].length;
+	  CFMOD+=(constant-contexts[TID].length)*numTimesEventsSeen[TID];
+
+	  loglikelihood+=Math.log(modelDistribution[outcomes[TID]])*numTimesEventsSeen[TID];
+	  numEvents+=numTimesEventsSeen[TID];
         }
         display(".");
 	
