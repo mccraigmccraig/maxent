@@ -1,4 +1,9 @@
-1.2.7
+1.2.9
+_____
+
+
+
+1.2.8
 _____
 
 Modified GISTrainer to use the new increment() and adjustValue()
