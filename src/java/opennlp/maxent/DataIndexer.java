@@ -27,7 +27,7 @@ import java.util.*;
  * used by the GIS trainer.
  *
  * @author      Jason Baldridge
- * @version $Revision: 1.8 $, $Date: 2002/01/03 16:43:23 $
+ * @version $Revision: 1.9 $, $Date: 2002/04/19 09:59:53 $
  */
 public class DataIndexer {
     public int[][] contexts;
@@ -155,12 +155,13 @@ public class DataIndexer {
             String[] ec = ev.getContext();
             for (int j=0; j<ec.length; j++) {
                 if (! predicatesInOut.containsKey(ec[j])) {
-                    int count = counter.get(ec[j]) + 1;
-                    if (count >= cutoff) {
-                        predicatesInOut.put(ec[j], predicateIndex++);
-                        counter.remove(ec[j]);
-                    } else {
-                        counter.put(ec[j], count);
+		    if (counter.increment(ec[j])) {
+			if (counter.get(ec[j]) >= cutoff) {
+			    predicatesInOut.put(ec[j], predicateIndex++);
+			    counter.remove(ec[j]);
+			}
+		    } else {
+                        counter.put(ec[j], 1);
                     }
                 }
             }
