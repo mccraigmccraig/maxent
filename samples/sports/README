@@ -13,7 +13,8 @@ the opennlp.grok.preprocess package, available at http://grok.sf.net.
 
 To play with this sample application, do the following:
 
-Be sure that opennlp.maxent is in your classpath.
+Be sure that opennlp.maxent and trove.jar (found in the lib directory)
+are in your classpath.
 
 Compile the java files: 
    
@@ -23,21 +24,34 @@ or
 
 > jikes *.java
 
-(If you have it installedon your system, jikes is faster!)
+(If you have it installed on your system, jikes is faster!)
 
-Build the models:
+Note: the following will avoid the need to setup you classpath in your
+environment (be sure to fix the maxent jar for the correct version
+number):
+
+> javac -classpath .:../../lib/trove.jar:../../output/maxent-2.1.1.jar *.java
+
+Now, build the models:
 
 > java CreateModel gameLocation.dat
 > java CreateModel football.dat
 
 This will produce the two models "gameLocationModel.txt" and
-"footballModel.txt" in this directory.
+"footballModel.txt" in this directory. Again, to fix classpath issues
+on the command line, do the following instead:
+
+> java -cp .:../../lib/trove.jar:../../output/classes CreateModel football.dat
 
 You can then test the models on the data itself to see what sort of
 results they get on the data they were trained on:
 
 > java Predict gameLocation.dat
 > java Predict football.dat
+
+or, with command line classpath:
+
+> java -cp .:../../lib/trove.jar:../../output/classes Predict football.test
 
 You'll get output such as the following:
 
