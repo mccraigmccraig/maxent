@@ -19,13 +19,14 @@ package opennlp.maxent;
 
 import gnu.trove.*;
 import java.util.*;
+import java.text.DecimalFormat;
 
 /**
  * A maximum entropy model which has been trained using the Generalized
  * Iterative Scaling procedure (implemented in GIS.java).
  *
  * @author      Tom Morton and Jason Baldridge
- * @version     $Revision: 1.9 $, $Date: 2002/12/11 16:18:41 $
+ * @version     $Revision: 1.10 $, $Date: 2003/03/11 03:05:03 $
  */
 public final class GISModel implements MaxentModel {
     private final TIntDoubleHashMap[] params;
@@ -37,6 +38,7 @@ public final class GISModel implements MaxentModel {
     private final int numOutcomes;
     private final double iprob;
     private final double fval;
+    private DecimalFormat df;
 
     private int[] numfeats;
     
@@ -158,16 +160,13 @@ public final class GISModel implements MaxentModel {
             return "The double array sent as a parameter to GISModel.getAllOutcomes() must not have been produced by this model.";
         }
         else {
+            if (df == null) { //lazy initilazation
+              df = new DecimalFormat("0.0000");
+            }
             StringBuffer sb = new StringBuffer(ocs.length*2);
-            String d = Double.toString(ocs[0]);
-            if (d.length() > 6)
-                d = d.substring(0,7);
-            sb.append(ocNames[0]).append("[").append(d).append("]");
+            sb.append(ocNames[0]).append("[").append(df.format(ocs[0])).append("]");
             for (int i = 1; i<ocs.length; i++) {
-                d = Double.toString(ocs[i]);
-                if (d.length() > 6)
-                    d = d.substring(0,7);
-                sb.append("  ").append(ocNames[i]).append("[").append(d).append("]");
+                sb.append("  ").append(ocNames[i]).append("[").append(df.format(ocs[i])).append("]");
             }
             return sb.toString();
         }
