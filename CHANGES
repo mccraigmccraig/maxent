@@ -1,9 +1,11 @@
-2.1.1
+2.2.0
 -----
+Added TwoPassDataIndexer to use a temorpy file for storing the events.  This
+allows much larger models to be trained in a smaller amount of memory with no
+noticible decrease in performance for large models.
 
-
-
-
+Made minor additions to interface to allow more flexible access to model 
+outcomes.
 
 2.1.0 (Major bug fixes) 
 -----

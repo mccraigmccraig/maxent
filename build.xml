@@ -1,22 +1,21 @@
-<!-- $Id: build.xml,v 1.20 2003/01/17 16:40:05 jasonbaldridge Exp $ -->
+<!-- $Id: build.xml,v 1.21 2004/02/02 19:43:25 tsmorton Exp $ -->
 
 <project default="package" basedir=".">
 
   <!-- =================================================================== -->
-  <!-- Initialization target                                               -->
+  <!-- Initialization target                                                                                                                           -->
   <!-- =================================================================== -->
   <target name="init">
     <tstamp/>
     <property name="Name" value="Maxent"/>
     <property name="name" value="maxent"/>
-    <property name="version" value="2.1.1"/>
-    <property name="year" value="2003"/>
+    <property name="version" value="2.2.0"/>
+    <property name="year" value="2004"/>
 
     <echo message="----------- ${Name} ${version} [${year}] ------------"/>
 
-    <property name="build.compiler" value="classic"/>
-    <property name="debug" value="on"/>
-    <property name="optimize" value="off"/>
+    <property name="debug" value="off"/>
+    <property name="optimize" value="on"/>
     <property name="deprecation" value="on"/>
 
     <property name="src.dir" value="./src/java"/>
