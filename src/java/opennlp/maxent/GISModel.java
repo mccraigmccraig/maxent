@@ -26,7 +26,7 @@ import java.util.*;
  * Iterative Scaling procedure (implemented in GIS.java).
  *
  * @author      Tom Morton and Jason Baldridge
- * @version     $Revision: 1.1 $, $Date: 2001/10/23 14:06:53 $
+ * @version     $Revision: 1.2 $, $Date: 2001/11/06 12:16:58 $
  */
 public final class GISModel implements MaxentModel {
     private final OpenIntDoubleHashMap[] params;
@@ -136,6 +136,39 @@ public final class GISModel implements MaxentModel {
 
     
     /**
+     * Return a string matching all the outcome names with all the
+     * probabilities produced by the <code>eval(String[] context)</code>
+     * method.
+     *
+     * @param ocs A <code>double[]</code> as returned by the
+     *            <code>eval(String[] context)</code>
+     *            method.
+     * @return    String containing outcome names paired with the normalized
+     *            probability (contained in the <code>double[] ocs</code>)
+     *            for each one.
+     */    
+    public final String getAllOutcomes (double[] ocs) {
+	if (ocs.length != ocNames.length) {
+	    return "The double array sent as a parameter to GISModel.getAllOutcomes() must not have been produced by this model.";
+	}
+	else {
+	    StringBuffer sb = new StringBuffer(ocs.length*2);
+	    String d = Double.toString(ocs[0]);
+	    if (d.length() > 6)
+		d = d.substring(0,7);
+	    sb.append(ocNames[0]).append("[").append(d).append("]");
+	    for (int i = 1; i<ocs.length; i++) {
+		d = Double.toString(ocs[i]);
+		if (d.length() > 6)
+		    d = d.substring(0,7);
+		sb.append("  ").append(ocNames[i]).append("[").append(d).append("]");
+	    }
+	    return sb.toString();
+	}
+    }
+
+    
+    /**
      * Return the name of an outcome corresponding to an int id.
      *
      * @param i An outcome id.
@@ -144,6 +177,7 @@ public final class GISModel implements MaxentModel {
     public final String getOutcome(int i) {
 	return ocNames[i];
     }
+
 
     
     /**
