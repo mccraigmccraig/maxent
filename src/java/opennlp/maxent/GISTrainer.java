@@ -26,7 +26,7 @@ import gnu.trove.*;
  * and is available at <a href ="ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z"><code>ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z</code></a>. 
  *
  * @author  Jason Baldridge
- * @version $Revision: 1.14 $, $Date: 2004/06/11 20:51:37 $
+ * @version $Revision: 1.15 $, $Date: 2004/06/14 20:52:41 $
  */
 class GISTrainer {
 
@@ -105,22 +105,22 @@ class GISTrainer {
   private final double NEAR_ZERO = 0.01;
   private final double LLThreshold = 0.0001;
 
-  // Stores the output of the current model on a single event durring
-  // training.  This we be reset for every event for every itteration.
+  /** Stores the output of the current model on a single event durring
+   *  training.  This we be reset for every event for every itteration.  */
   double[] modelDistribution;
-  // Stores the number of features that get fired per event
+  /** Stores the number of features that get fired per event. */
   int[] numfeats;
-  // initial probability for all outcomes.
+  /** Initial probability for all outcomes. */
   double iprob;
 
-  // make all values in an TIntDoubleHashMap return to 0.0
+  /** Make all values in an TIntDoubleHashMap return to 0. */
   private TDoubleFunction backToZeros = new TDoubleFunction() {
     public double execute(double arg) {
       return 0.0;
     }
   };
 
-  // update the extected values of the features based on the modelDistribution for this event values
+  /** Updates the extected values of the features based on the modelDistribution for this event values. */
   private TIntDoubleProcedure updateModelExpect = new TIntDoubleProcedure() {
     public boolean execute(int oid, double arg) {
       modelExpects[PID].put(oid, arg + (modelDistribution[oid] * numTimesEventsSeen[TID]));
@@ -128,7 +128,7 @@ class GISTrainer {
     }
   };
 
-  // update the params based on the newly computed model expected values
+  /** Updates the params based on the newly computed model expected values. */
   private TIntDoubleProcedure updateParams = new TIntDoubleProcedure() {
     public boolean execute(int oid, double arg) {
       params[PID].put(oid, arg + (Math.log(observedExpects[PID].get(oid)) - Math.log(modelExpects[PID].get(oid))));
@@ -268,7 +268,6 @@ class GISTrainer {
     // the data.  The default is to assume that we observed "1/10th" of a
     // feature during training.
     final double smoothingObservation = _smoothingObservation;
-    final double logSmoothingObservation = Math.log(_smoothingObservation);
 
     // Get the observed expectations of the features. Strictly speaking,
     // we should divide the counts by the number of Tokens, but because of
@@ -304,7 +303,7 @@ class GISTrainer {
         else if (_simpleSmoothing) {
           params[PID].put(OID, 0.0);
           modelExpects[PID].put(OID, 0.0);
-          observedExpects[PID].put(OID, logSmoothingObservation);
+          observedExpects[PID].put(OID,smoothingObservation);
         }
       }
       params[PID].compact();
