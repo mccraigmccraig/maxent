@@ -19,10 +19,6 @@ package opennlp.maxent;
 
 import gnu.trove.*;
 
-import java.io.*;
-import java.util.*;
-import java.util.zip.*;
-
 
 /**
  * An implementation of Generalized Iterative Scaling.  The reference paper
@@ -31,7 +27,7 @@ import java.util.zip.*;
  * and is available at <a href ="ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z"><code>ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z</code></a>. 
  *
  * @author  Jason Baldridge
- * @version $Revision: 1.9 $, $Date: 2003/01/08 15:44:47 $
+ * @version $Revision: 1.10 $, $Date: 2003/04/05 13:33:38 $
  */
 class GISTrainer {
 

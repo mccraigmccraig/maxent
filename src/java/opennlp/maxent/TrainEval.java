@@ -19,14 +19,13 @@ package opennlp.maxent;
 
 import opennlp.maxent.io.*;
 import java.io.*;
-import java.util.*;
 
 /**
  * Trains or evaluates maxent components which have implemented the Evalable
  * interface.
  *
  * @author      Gann Bierner
- * @version     $Revision: 1.3 $, $Date: 2002/04/25 15:01:07 $
+ * @version     $Revision: 1.4 $, $Date: 2003/04/05 13:33:38 $
  */
 public class TrainEval {
     

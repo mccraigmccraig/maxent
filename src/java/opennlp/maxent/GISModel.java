@@ -18,7 +18,6 @@
 package opennlp.maxent;
 
 import gnu.trove.*;
-import java.util.*;
 import java.text.DecimalFormat;
 
 /**
@@ -26,7 +25,7 @@ import java.text.DecimalFormat;
  * Iterative Scaling procedure (implemented in GIS.java).
  *
  * @author      Tom Morton and Jason Baldridge
- * @version     $Revision: 1.10 $, $Date: 2003/03/11 03:05:03 $
+ * @version     $Revision: 1.11 $, $Date: 2003/04/05 13:33:39 $
  */
 public final class GISModel implements MaxentModel {
     private final TIntDoubleHashMap[] params;
