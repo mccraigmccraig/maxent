@@ -24,11 +24,11 @@ import java.io.*;
  * Test the model on some input.
  *
  * @author  Jason Baldridge
- * @version $Revision: 1.1 $, $Date: 2001/11/15 13:03:41 $
+ * @version $Revision: 1.2 $, $Date: 2001/11/20 17:07:17 $
  */
 public class Predict {
     MaxentModel _model;
-    ContextGenerator _cg = new MyContextGenerator();
+    ContextGenerator _cg = new BasicContextGenerator();
     
     public Predict (MaxentModel m) {
 	_model = m;
@@ -73,7 +73,7 @@ public class Predict {
 	}
 
 	if (dataFileName.equals("")) {
-	    predictor.eval("Rainy,Happy,Humid");
+	    predictor.eval("Rainy Happy Humid");
 	    predictor.eval("Rainy");
 	    predictor.eval("Blarmey");
 	}
@@ -85,7 +85,7 @@ public class Predict {
 
 		while (ds.hasNext()) {
 		    String s = (String)ds.nextToken();
-		    predictor.eval(s.substring(0, s.lastIndexOf(',')));
+		    predictor.eval(s.substring(0, s.lastIndexOf(' ')));
 		}
 		return;
 	    }

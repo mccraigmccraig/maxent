@@ -25,7 +25,7 @@ import java.io.*;
  * from the data.
  *
  * @author  Chieu Hai Leong and Jason Baldridge
- * @version $Revision: 1.2 $, $Date: 2001/11/16 10:38:21 $
+ * @version $Revision: 1.3 $, $Date: 2001/11/20 17:07:16 $
  */
 public class CreateModel {
 
@@ -50,8 +50,8 @@ public class CreateModel {
 	    + "Model.txt";
 	try {
 	    FileReader datafr = new FileReader(new File(dataFileName));
-	    EventCollector ec = new MyEventCollector(datafr);
-	    EventStream es = new EventCollectorAsStream(ec);
+	    EventStream es = 
+		new BasicEventStream(new PlainTextByLineDataStream(datafr));
 	    GIS.SMOOTHING = USE_SMOOTHING;
 	    GIS.SMOOTHING_OBSERVATION = SMOOTHING_OBSERVATION;
 	    GISModel model = GIS.trainModel(es);
