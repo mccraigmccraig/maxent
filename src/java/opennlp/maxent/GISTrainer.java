@@ -31,7 +31,7 @@ import java.util.zip.*;
  * and is available at <a href ="ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z"><code>ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z</code></a>. 
  *
  * @author  Jason Baldridge
- * @version $Revision: 1.7 $, $Date: 2002/11/20 03:05:25 $
+ * @version $Revision: 1.8 $, $Date: 2003/01/02 14:46:30 $
  */
 class GISTrainer {
 
@@ -397,7 +397,7 @@ class GISTrainer {
       for (int oid=0; oid<numOutcomes; oid++) {
 	outsums[oid] = Math.exp(outsums[oid]
 				+ ((1.0 -
-				    (numfeats[oid]/constant))
+				    ((double) numfeats[oid]/constant))
 				    * correctionParam));
 	SUM += outsums[oid];
       }
