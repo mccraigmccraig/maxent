@@ -33,10 +33,24 @@ import java.util.zip.*;
  * and is available at <a href ="ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z"><code>ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z</code></a>. 
  *
  * @author  Jason Baldridge
- * @version $Revision: 1.1 $, $Date: 2001/10/23 14:06:53 $
+ * @version $Revision: 1.2 $, $Date: 2001/11/16 10:37:43 $
  */
 class GISTrainer {
+
+    // This can improve model accuracy, though training will potentially take
+    // longer and use more memory.  Model size will also be larger.  Initial
+    // testing indicates improvements for models built on small data sets and
+    // few outcomes, but performance degradation for those with large data
+    // sets and lots of outcomes.
+    private boolean _simpleSmoothing = false;
+
+    // If we are using smoothing, this is used as the "number" of
+    // times we want the trainer to imagine that it saw a feature that it
+    // actually didn't see.  Defaulted to 0.1.
+    private double _smoothingObservation = 0.1;
+    
     private boolean printMessages = false;
+
     private int numTokens;   // # of event tokens
     private int numPreds;    // # of predicates
     private int numOutcomes; // # of outcomes
@@ -192,6 +206,30 @@ class GISTrainer {
         this.printMessages = printMessages;
     }
 
+
+    /**
+     * Sets whether this trainer will use smoothing while training the model.
+     * This can improve model accuracy, though training will potentially take
+     * longer and use more memory.  Model size will also be larger.
+     *
+     * @param smooth true if smoothing is desired, false if not
+     */
+    public void setSmoothing (boolean smooth) {
+	_simpleSmoothing = smooth;
+    }
+
+    /**
+     * Sets whether this trainer will use smoothing while training the model.
+     * This can improve model accuracy, though training will potentially take
+     * longer and use more memory.  Model size will also be larger.
+     *
+     * @param timesSeen the "number" of times we want the trainer to imagine
+     *                  it saw a feature that it actually didn't see
+     */
+    public void setSmoothingObservation (double timesSeen) {
+	_smoothingObservation = timesSeen;
+    }
+
     /**
      * Train a model using the GIS algorithm.
      *
@@ -255,7 +293,12 @@ class GISTrainer {
 
         di = null; // don't need it anymore
 
-        // Get the observed expectations of the features. Strictly speakings,
+	// A fake "observation" to cover features which are not detected in
+	// the data.  The default is to assume that we observed "1/10th" of a
+	// feature during training.
+	final double smoothingObservation = Math.log(_smoothingObservation);
+
+        // Get the observed expectations of the features. Strictly speaking,
         // we should divide the counts by the number of Tokens, but because of
         // the way the model's expectations are approximated in the
         // implementation, this is cancelled out when we compute the next
@@ -263,8 +306,9 @@ class GISTrainer {
         params = new OpenIntDoubleHashMap[numPreds];
         modifiers = new OpenIntDoubleHashMap[numPreds];
         observedExpects = new OpenIntDoubleHashMap[numPreds];
-        for (PID=0; PID<numPreds; PID++) {
-            params[PID] = new OpenIntDoubleHashMap();
+
+	for (PID=0; PID<numPreds; PID++) {
+	    params[PID] = new OpenIntDoubleHashMap();
             modifiers[PID] = new OpenIntDoubleHashMap();
             observedExpects[PID] = new OpenIntDoubleHashMap();
             for (OID=0; OID<numOutcomes; OID++) {
@@ -273,6 +317,11 @@ class GISTrainer {
                     modifiers[PID].put(OID, 0.0);
                     observedExpects[PID].put(OID,Math.log(predCount[PID][OID]));
                 }
+		else if (_simpleSmoothing) {
+                    params[PID].put(OID, 0.0);
+                    modifiers[PID].put(OID, 0.0);
+                    observedExpects[PID].put(OID, smoothingObservation);
+		}
             }
             params[PID].trimToSize();
             modifiers[PID].trimToSize();

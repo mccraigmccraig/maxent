@@ -22,7 +22,7 @@ package opennlp.maxent;
  * GISModels.
  *
  * @author  Jason Baldridge
- * @version $Revision: 1.2 $, $Date: 2001/11/06 12:14:35 $
+ * @version $Revision: 1.3 $, $Date: 2001/11/16 10:37:43 $
  */
 public class GIS {
     /**
@@ -30,8 +30,21 @@ public class GIS {
      * model training displayed. Alternately, you can use the overloaded
      * version of trainModel() to conditionally enable progress messages.
      */
-    public static boolean printMessages = true;
+    public static boolean PRINT_MESSAGES = true;
 
+    /**
+     * Defines whether the created trainer will use smoothing while training
+     * the model. This can improve model accuracy, though training will
+     * potentially take longer and use more memory.  Model size will also be
+     * larger. Set true if smoothing is desired, false if not.
+     */
+    public static boolean SMOOTHING = false;
+
+    // If we are using smoothing, this is used as the "number" of
+    // times we want the trainer to imagine that it saw a feature that it
+    // actually didn't see.  Defaulted to 0.1.
+    public static double SMOOTHING_OBSERVATION = 0.1;
+    
     /**
      * Train a model using the GIS algorithm, assuming 100 iterations and no
      * cutoff.
@@ -42,7 +55,7 @@ public class GIS {
      *         to disk using an opennlp.maxent.io.GISModelWriter object.
      */
     public static GISModel trainModel(EventStream eventStream) {
-        return trainModel(eventStream, 100, 0, printMessages);
+        return trainModel(eventStream, 100, 0, PRINT_MESSAGES);
     }
 
     /**
@@ -59,7 +72,7 @@ public class GIS {
     public static GISModel trainModel(EventStream eventStream,
                                       int iterations,
                                       int cutoff) {
-        return trainModel(eventStream,iterations,cutoff,printMessages);
+        return trainModel(eventStream, iterations, cutoff, PRINT_MESSAGES);
     }
     
     /**
@@ -80,7 +93,9 @@ public class GIS {
                                       int cutoff,
                                       boolean printMessagesWhileTraining) {
         GISTrainer trainer = new GISTrainer(printMessagesWhileTraining);
-        return trainer.trainModel(eventStream,iterations,cutoff);
+	trainer.setSmoothing(SMOOTHING);
+	trainer.setSmoothingObservation(SMOOTHING_OBSERVATION);
+        return trainer.trainModel(eventStream, iterations, cutoff);
     }
 }
 
