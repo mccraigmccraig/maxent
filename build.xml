@@ -1,4 +1,4 @@
-<!-- $Id: build.xml,v 1.6 2001/11/06 15:04:59 jasonbaldridge Exp $ -->
+<!-- $Id: build.xml,v 1.7 2001/11/06 15:59:43 jasonbaldridge Exp $ -->
 
 <project default="package" basedir=".">
 
@@ -9,7 +9,7 @@
     <tstamp/>
     <property name="Name" value="Maxent"/>
     <property name="name" value="maxent"/>
-    <property name="version" value="1.2.2"/>
+    <property name="version" value="1.2.3"/>
     <property name="year" value="2001"/>
 
     <echo message="----------- ${Name} ${version} [${year}] ------------"/>
@@ -138,8 +138,10 @@
   <target name="release" depends="clean">
     <tar tarfile="${name}-${version}-src.tar"
          basedir="../"
-	 includes="${name}/**"
-	 excludes="**/CVS" />
+	 includes="${name}/**" >
+      <exclude name="${name}/docs/api/**"/>
+      <exclude name="**/CVS"/>
+    </tar>
     <gzip src="${name}-${version}-src.tar" 
           zipfile="../${name}-${version}-src.tgz" />
     <delete file="${name}-${version}-src.tar" />

@@ -1,6 +1,8 @@
 1.2.2
 -----
-Easier to keep homepage up-to-date.
+Added "exe" to build.xml to create stand alone jar files. Also added
+structure and "homepage" target so that it is easier to keep homepage
+up-to-date.
 
 Added IntegerPool, which manages a pool of shareable, read-only Integer 
 objects in a fixed range. This is used in several places where Integer 
