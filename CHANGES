@@ -1,3 +1,13 @@
+1.2.3
+-----
+Added sample application "sports" to help with testing model behavior
+and act as an example to help newbies use the toolkit.
+
+Fixed bug in TrainEval in which the number of iterations and the
+cutoff were swapped in the call to train the model.
+
+
+
 1.2.2
 -----
 Added "exe" to build.xml to create stand alone jar files. Also added
