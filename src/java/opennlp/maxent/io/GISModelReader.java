@@ -17,14 +17,15 @@
 //////////////////////////////////////////////////////////////////////////////   
 package opennlp.maxent.io;
 
-import opennlp.maxent.*;
 import cern.colt.map.*;
+import java.util.StringTokenizer;
+import opennlp.maxent.*;
 
 /**
  * Abstract parent class for readers of GISModels.
  *
  * @author      Jason Baldridge
- * @version     $Revision: 1.1 $, $Date: 2001/10/23 14:06:53 $
+ * @version     $Revision: 1.2 $, $Date: 2001/10/28 01:25:56 $
  */
 public abstract class GISModelReader {
     /**
@@ -71,84 +72,84 @@ public abstract class GISModelReader {
      *         this GISModelReader (usually via its the constructor).
      */
     public GISModel getModel () throws java.io.IOException {
-	checkModelType();
-	int correctionConstant = getCorrectionConstant();
-	double correctionParam = getCorrectionParameter();
-	String[] outcomeLabels = getOutcomes();
-	int[][] outcomePatterns = getOutcomePatterns();
-	String[] predLabels = getPredicates();
-	OpenIntDoubleHashMap[] params = getParameters(outcomePatterns);
+        checkModelType();
+        int correctionConstant = getCorrectionConstant();
+        double correctionParam = getCorrectionParameter();
+        String[] outcomeLabels = getOutcomes();
+        int[][] outcomePatterns = getOutcomePatterns();
+        String[] predLabels = getPredicates();
+        OpenIntDoubleHashMap[] params = getParameters(outcomePatterns);
  	
-	return new GISModel(params,
-			    predLabels,
-			    outcomeLabels,
-			    correctionConstant,
-			    correctionParam);
+        return new GISModel(params,
+                            predLabels,
+                            outcomeLabels,
+                            correctionConstant,
+                            correctionParam);
 
     }
 
     protected void checkModelType () throws java.io.IOException {
-	String modelType = readUTF();
-	if (!modelType.equals("GIS"))
-	    System.out.println("Error: attempting to load a "+modelType+
-			       " model as a GIS model."+
-			       " You should expect problems.");
+        String modelType = readUTF();
+        if (!modelType.equals("GIS"))
+            System.out.println("Error: attempting to load a "+modelType+
+                               " model as a GIS model."+
+                               " You should expect problems.");
     }
 
     protected int getCorrectionConstant () throws java.io.IOException {
-	return readInt();
+        return readInt();
     }
     
     protected double getCorrectionParameter () throws java.io.IOException {
-	return readDouble();
+        return readDouble();
     }
     
     protected String[] getOutcomes () throws java.io.IOException {
-	int numOutcomes = readInt();
-	String[] outcomeLabels = new String[numOutcomes];
-	for (int i=0; i<numOutcomes; i++) outcomeLabels[i] = readUTF();
-	return outcomeLabels;
+        int numOutcomes = readInt();
+        String[] outcomeLabels = new String[numOutcomes];
+        for (int i=0; i<numOutcomes; i++) outcomeLabels[i] = readUTF();
+        return outcomeLabels;
     }
 
     protected int[][] getOutcomePatterns () throws java.io.IOException {
-	int numOCTypes = readInt();
-	int[][] outcomePatterns = new int[numOCTypes][];
-	for (int i=0; i<numOCTypes; i++) {
-	    String[] info = PerlHelp.split(readUTF());
-	    int[] infoInts = new int[info.length];
-	    for (int j=0; j<info.length; j++)
-		infoInts[j] = Integer.parseInt(info[j]);
-	    outcomePatterns[i] = infoInts;
-	}
-	return outcomePatterns;
+        int numOCTypes = readInt();
+        int[][] outcomePatterns = new int[numOCTypes][];
+        for (int i=0; i<numOCTypes; i++) {
+            StringTokenizer tok = new StringTokenizer(readUTF(), " ");
+            int[] infoInts = new int[tok.countTokens()];
+            for (int j = 0; tok.hasMoreTokens(); j++) {
+                infoInts[j] = Integer.parseInt(tok.nextToken());
+            }
+            outcomePatterns[i] = infoInts;
+        }
+        return outcomePatterns;
     }
 
     protected String[] getPredicates () throws java.io.IOException {
-	NUM_PREDS = readInt();
-	String[] predLabels = new String[NUM_PREDS];
-	for (int i=0; i<NUM_PREDS; i++)
-	    predLabels[i] = readUTF();
-	return predLabels;
+        NUM_PREDS = readInt();
+        String[] predLabels = new String[NUM_PREDS];
+        for (int i=0; i<NUM_PREDS; i++)
+            predLabels[i] = readUTF();
+        return predLabels;
     }
 
     protected OpenIntDoubleHashMap[] getParameters (int[][] outcomePatterns)
-	throws java.io.IOException {
+        throws java.io.IOException {
 	
- 	OpenIntDoubleHashMap[] params = new OpenIntDoubleHashMap[NUM_PREDS];
+        OpenIntDoubleHashMap[] params = new OpenIntDoubleHashMap[NUM_PREDS];
 
-	int pid=0;
-	for (int i=0; i<outcomePatterns.length; i++) {
-	    for (int j=0; j<outcomePatterns[i][0]; j++) {
-		params[pid] = new OpenIntDoubleHashMap();
-		for (int k=1; k<outcomePatterns[i].length; k++) {
-		    double d = readDouble();
-		    params[pid].put(outcomePatterns[i][k], d);
-		}
-		params[pid].trimToSize();
-		pid++;
-	    }
-	}
-	return params;
+        int pid=0;
+        for (int i=0; i<outcomePatterns.length; i++) {
+            for (int j=0; j<outcomePatterns[i][0]; j++) {
+                params[pid] = new OpenIntDoubleHashMap();
+                for (int k=1; k<outcomePatterns[i].length; k++) {
+                    double d = readDouble();
+                    params[pid].put(outcomePatterns[i][k], d);
+                }
+                params[pid].trimToSize();
+                pid++;
+            }
+        }
+        return params;
     }
-
 }

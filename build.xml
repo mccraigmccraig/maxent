@@ -1,4 +1,4 @@
-<!-- $Id: build.xml,v 1.3 2001/10/23 15:24:24 jasonbaldridge Exp $ -->
+<!-- $Id: build.xml,v 1.4 2001/10/28 01:25:56 ericdf Exp $ -->
 
 <project default="package" basedir=".">
 
@@ -38,6 +38,12 @@
     <filter token="date" value="${TODAY}"/>
     <filter token="log" value="true"/>
     <filter token="verbose" value="true"/>
+
+    <path id="build.classpath">
+      <pathelement location="${lib.dir}/xerces.jar"/>
+      <pathelement location="${lib.dir}/java-getopt.jar"/>
+      <pathelement location="${lib.dir}/colt.jar"/>
+    </path>
 
   </target>
 
@@ -93,6 +99,7 @@
     <javac srcdir="${build.src}"
            destdir="${build.dest}"
            debug="${debug}"
+           classpathref="build.classpath"
            optimize="${optimize}"/>
   </target>
 
