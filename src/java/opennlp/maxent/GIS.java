@@ -22,7 +22,7 @@ package opennlp.maxent;
  * GISModels.
  *
  * @author  Jason Baldridge
- * @version $Revision: 1.1 $, $Date: 2001/10/23 14:06:53 $
+ * @version $Revision: 1.2 $, $Date: 2001/11/06 12:14:35 $
  */
 public class GIS {
     /**
@@ -31,6 +31,19 @@ public class GIS {
      * version of trainModel() to conditionally enable progress messages.
      */
     public static boolean printMessages = true;
+
+    /**
+     * Train a model using the GIS algorithm, assuming 100 iterations and no
+     * cutoff.
+     *
+     * @param eventStream The EventStream holding the data on which this model
+     *                    will be trained.
+     * @return The newly trained model, which can be used immediately or saved
+     *         to disk using an opennlp.maxent.io.GISModelWriter object.
+     */
+    public static GISModel trainModel(EventStream eventStream) {
+        return trainModel(eventStream, 100, 0, printMessages);
+    }
 
     /**
      * Train a model using the GIS algorithm.
