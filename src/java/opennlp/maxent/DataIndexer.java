@@ -27,7 +27,7 @@ import java.util.*;
  * used by the GIS trainer.
  *
  * @author      Jason Baldridge
- * @version $Revision: 1.9 $, $Date: 2002/04/19 09:59:53 $
+ * @version $Revision: 1.10 $, $Date: 2002/11/20 02:41:30 $
  */
 public class DataIndexer {
     public int[][] contexts;
@@ -65,7 +65,7 @@ public class DataIndexer {
 
         System.out.print("\tComputing event counts...  ");
         events = computeEventCounts(eventStream,predicateIndex,cutoff);
-        System.out.println("done.");
+        System.out.println("done. "+events.size()+" events");
 
         System.out.print("\tIndexing...  ");
         eventsToCompare = index(events,predicateIndex);
@@ -156,13 +156,13 @@ public class DataIndexer {
             for (int j=0; j<ec.length; j++) {
                 if (! predicatesInOut.containsKey(ec[j])) {
 		    if (counter.increment(ec[j])) {
-			if (counter.get(ec[j]) >= cutoff) {
-			    predicatesInOut.put(ec[j], predicateIndex++);
-			    counter.remove(ec[j]);
-			}
 		    } else {
                         counter.put(ec[j], 1);
                     }
+		    if (counter.get(ec[j]) >= cutoff) {
+		      predicatesInOut.put(ec[j], predicateIndex++);
+		      counter.remove(ec[j]);
+		    }
                 }
             }
         }
@@ -207,6 +207,9 @@ public class DataIndexer {
                 ce = new ComparableEvent(ocID, indexedContext.toNativeArray());
                 eventsToCompare.add(ce);
             }
+	    else {
+	      System.err.println("Dropped event "+ev.getOutcome()+":"+Arrays.asList(ev.getContext()));
+	    }
             // recycle the TIntArrayList
             indexedContext.resetQuick();
         }
