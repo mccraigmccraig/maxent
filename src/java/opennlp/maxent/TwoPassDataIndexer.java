@@ -57,7 +57,6 @@ public class TwoPassDataIndexer extends AbstractDataIndexer{
        */
   public TwoPassDataIndexer(EventStream eventStream, int cutoff) {
     TObjectIntHashMap predicateIndex;
-    TLinkedList events;
     List eventsToCompare;
 
     predicateIndex = new TObjectIntHashMap();
@@ -73,8 +72,6 @@ public class TwoPassDataIndexer extends AbstractDataIndexer{
       System.out.print("\tIndexing...  ");
 
       eventsToCompare = index(numEvents, new FileEventStream(tmp), predicateIndex);
-      // done with event list
-      events = null;
       // done with predicates
       predicateIndex = null;
       tmp.delete();
@@ -130,7 +127,6 @@ public class TwoPassDataIndexer extends AbstractDataIndexer{
   private List index(int numEvents, EventStream es, TObjectIntHashMap predicateIndex) {
     TObjectIntHashMap omap = new TObjectIntHashMap();
     int outcomeCount = 0;
-    int predCount = 0;
     List eventsToCompare = new ArrayList(numEvents);
     TIntArrayList indexedContext = new TIntArrayList();
     while (es.hasNext()) {
@@ -138,7 +134,7 @@ public class TwoPassDataIndexer extends AbstractDataIndexer{
       String[] econtext = ev.getContext();
       ComparableEvent ce;
 
-      int predID, ocID;
+      int ocID;
       String oc = ev.getOutcome();
 
       if (omap.containsKey(oc)) {
