@@ -1,4 +1,4 @@
-<!-- $Id: build.xml,v 1.21 2004/02/02 19:43:25 tsmorton Exp $ -->
+<!-- $Id: build.xml,v 1.22 2004/05/10 03:11:15 tsmorton Exp $ -->
 
 <project default="package" basedir=".">
 
@@ -7,9 +7,9 @@
   <!-- =================================================================== -->
   <target name="init">
     <tstamp/>
-    <property name="Name" value="Maxent"/>
-    <property name="name" value="maxent"/>
-    <property name="version" value="2.2.0"/>
+    <property name="Name" value="Maxent" />
+    <property name="name" value="maxent" />
+    <property name="version" value="2.2.0" />
     <property name="year" value="2004"/>
 
     <echo message="----------- ${Name} ${version} [${year}] ------------"/>
@@ -167,8 +167,8 @@
              splitindex="true"
              noindex="false"
              windowtitle="opennlp.${name}"
-             doctitle="The &lt;a href=&quot;http://opennlp.sf.net&quot;&gt;OpenNLP&lt;/a&gt; ${Name} API v${version}"
-             bottom="Copyright &#169; ${year} Jason Baldridge and Gann Bierner. All Rights Reserved."
+             doctitle="The OpenNLP ${Name} API v${version}"
+             bottom="Copyright &#169; ${year} Jason Baldridge, Gann Bierner, and Thomas Morton. All Rights Reserved."
     />
   </target>
 
