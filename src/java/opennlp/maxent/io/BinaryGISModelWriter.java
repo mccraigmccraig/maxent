@@ -25,7 +25,7 @@ import java.util.zip.*;
  * Model writer that saves models in binary format.
  *
  * @author      Jason Baldridge
- * @version     $Revision: 1.1 $, $Date: 2001/10/23 14:06:53 $
+ * @version     $Revision: 1.2 $, $Date: 2004/08/29 18:59:35 $
  */
 public class BinaryGISModelWriter extends GISModelWriter {
     DataOutputStream output;
@@ -56,7 +56,7 @@ public class BinaryGISModelWriter extends GISModelWriter {
      * itself to write the model to that stream.
      *
      * @param model The GISModel which is to be persisted.
-     * @param bw The BufferedWriter which will be used to persist the model.
+     * @param dos The stream which will be used to persist the model.
      */
     public BinaryGISModelWriter (GISModel model, DataOutputStream dos) {
 	super(model);

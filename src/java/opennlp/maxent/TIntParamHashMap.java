@@ -2,6 +2,9 @@ package opennlp.maxent;
 
 import gnu.trove.TIntDoubleHashMap;
 
+/**
+ * Data structure for storing a models parameters for each outcome associated with a specific context. 
+ */
 public class TIntParamHashMap extends TIntDoubleHashMap {
 
   public TIntParamHashMap() {

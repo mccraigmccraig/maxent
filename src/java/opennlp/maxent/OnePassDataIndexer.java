@@ -27,7 +27,7 @@ import java.util.*;
  * used by the GIS trainer.
  *
  * @author      Jason Baldridge
- * @version $Revision: 1.1 $, $Date: 2003/12/13 16:41:29 $
+ * @version $Revision: 1.2 $, $Date: 2004/08/29 18:59:12 $
  */
 public class OnePassDataIndexer extends AbstractDataIndexer  {
 
@@ -35,7 +35,7 @@ public class OnePassDataIndexer extends AbstractDataIndexer  {
      * One argument constructor for DataIndexer which calls the two argument
      * constructor assuming no cutoff.
      *
-     * @param events An Event[] which contains the a list of all the Events
+     * @param eventStream An Event[] which contains the a list of all the Events
      *               seen in the training data.
      */     
     public OnePassDataIndexer(EventStream eventStream) {
@@ -45,7 +45,7 @@ public class OnePassDataIndexer extends AbstractDataIndexer  {
     /**
      * Two argument constructor for DataIndexer.
      *
-     * @param events An Event[] which contains the a list of all the Events
+     * @param eventStream An Event[] which contains the a list of all the Events
      *               seen in the training data.
      * @param cutoff The minimum number of times a predicate must have been
      *               observed in order to be included in the model.

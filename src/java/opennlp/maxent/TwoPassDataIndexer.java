@@ -30,9 +30,13 @@ import java.util.StringTokenizer;
 
 import gnu.trove.*;
 
-/** 
- * @author Tom Morton
- *
+/**
+ * Collecting event and context counts by making two passes over the events.  The
+ * first pass determines which contexts will be used by the model, and the
+ * second pass creates the events in memory containing only the contexts which 
+ * will be used.  This greatly reduces the amount of memory required for storing
+ * the events.  During the first pass a temporary event file is created which
+ * is read during the second pass.
  */
 public class TwoPassDataIndexer extends AbstractDataIndexer{
 
@@ -40,21 +44,21 @@ public class TwoPassDataIndexer extends AbstractDataIndexer{
    * One argument constructor for DataIndexer which calls the two argument
    * constructor assuming no cutoff.
    *
-   * @param events An Event[] which contains the a list of all the Events
+   * @param eventStream An Event[] which contains the a list of all the Events
    *               seen in the training data.
    */
-  public TwoPassDataIndexer(EventStream eventStream1) {
-    this(eventStream1, 0);
+  public TwoPassDataIndexer(EventStream eventStream) {
+    this(eventStream, 0);
   }
 
   /**
-       * Two argument constructor for DataIndexer.
-       *
-       * @param events An Event[] which contains the a list of all the Events
-       *               seen in the training data.
-       * @param cutoff The minimum number of times a predicate must have been
-       *               observed in order to be included in the model.
-       */
+   * Two argument constructor for DataIndexer.
+   *
+   * @param eventStream An Event[] which contains the a list of all the Events
+   *               seen in the training data.
+   * @param cutoff The minimum number of times a predicate must have been
+   *               observed in order to be included in the model.
+   */
   public TwoPassDataIndexer(EventStream eventStream, int cutoff) {
     TObjectIntHashMap predicateIndex;
     List eventsToCompare;

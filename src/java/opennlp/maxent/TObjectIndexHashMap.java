@@ -3,6 +3,7 @@ package opennlp.maxent;
 import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.TObjectIntHashMap;
 
+/** Data structure storing the mapping between a context and its integer value. */
 public class TObjectIndexHashMap extends TObjectIntHashMap {
   
   public TObjectIndexHashMap() {
