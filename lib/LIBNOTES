@@ -45,3 +45,12 @@ License: LGPL
 A Java command line option parser.
 
 
+------------------------------------------------------------------------
+trove.jar
+
+GNU Trove, version 0.0.4
+Homepage: http://trove4j.sf.net
+License: LGPL
+
+High performance collections for Java.
+

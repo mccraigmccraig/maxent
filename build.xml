@@ -1,4 +1,4 @@
-<!-- $Id: build.xml,v 1.7 2001/11/06 15:59:43 jasonbaldridge Exp $ -->
+<!-- $Id: build.xml,v 1.8 2001/11/15 15:42:13 jasonbaldridge Exp $ -->
 
 <project default="package" basedir=".">
 
@@ -43,6 +43,7 @@
       <pathelement location="${lib.dir}/gnu-regexp.jar"/>
       <pathelement location="${lib.dir}/java-getopt.jar"/>
       <pathelement location="${lib.dir}/colt.jar"/>
+      <pathelement location="${lib.dir}/trove.jar"/>
     </path>
 
   </target>
@@ -126,6 +127,7 @@
         <pathelement location="${lib.dir}/gnu-regexp.jar"/>
 	<pathelement location="${lib.dir}/java-getopt.jar"/>
 	<pathelement location="${lib.dir}/colt.jar"/>
+	<pathelement location="${lib.dir}/trove.jar"/>
       </mergefiles>
     </jlink>
     <delete file="${build.dir}/${name}-${DSTAMP}.jar" />

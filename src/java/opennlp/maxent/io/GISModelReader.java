@@ -17,15 +17,15 @@
 //////////////////////////////////////////////////////////////////////////////   
 package opennlp.maxent.io;
 
+import opennlp.maxent.*;
 import cern.colt.map.*;
 import java.util.StringTokenizer;
-import opennlp.maxent.*;
 
 /**
  * Abstract parent class for readers of GISModels.
  *
  * @author      Jason Baldridge
- * @version     $Revision: 1.2 $, $Date: 2001/10/28 01:25:56 $
+ * @version     $Revision: 1.3 $, $Date: 2001/11/15 15:42:14 $
  */
 public abstract class GISModelReader {
     /**

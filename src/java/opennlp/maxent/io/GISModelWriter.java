@@ -17,9 +17,9 @@
 //////////////////////////////////////////////////////////////////////////////   
 package opennlp.maxent.io;
 
+import opennlp.maxent.*;
 import cern.colt.list.*;
 import cern.colt.map.*;
-import opennlp.maxent.*;
 import java.io.*;
 import java.util.*;
 
@@ -29,7 +29,7 @@ import java.util.*;
  * extending class to define precisely how the data should be stored.
  *
  * @author      Jason Baldridge
- * @version     $Revision: 1.1 $, $Date: 2001/10/23 14:06:53 $
+ * @version     $Revision: 1.2 $, $Date: 2001/11/15 15:42:14 $
  */
 public abstract class GISModelWriter {
     protected OpenIntDoubleHashMap[] PARAMS;
@@ -43,7 +43,7 @@ public abstract class GISModelWriter {
     	Object[] data = model.getDataStructures();
 
 	PARAMS = (OpenIntDoubleHashMap[])data[0];
-	HashMap pmap = (HashMap)data[1];
+	Map pmap = (Map)data[1];
 	OUTCOME_LABELS = (String[])data[2];
 	CORRECTION_CONSTANT = ((Integer)data[3]).intValue();
 	CORRECTION_PARAM = ((Double)data[4]).doubleValue();
@@ -89,12 +89,12 @@ public abstract class GISModelWriter {
 	// The sorting is done so that we actually can write this out more
 	// compactly than as the entire list.
 	ComparablePredicate[] sorted = sortValues();
-	ArrayList compressed = compressOutcomes(sorted);
+	List compressed = compressOutcomes(sorted);
 	
 	writeInt(compressed.size());
 
 	for (int i=0; i<compressed.size(); i++) {
-	    ArrayList a = (ArrayList)compressed.get(i);
+	    List a = (List)compressed.get(i);
 	    writeUTF(a.size()
 		     + ((ComparablePredicate)a.get(0)).toString());
 	}	
@@ -148,11 +148,11 @@ public abstract class GISModelWriter {
 	return sortPreds;
     }
     
-    protected ArrayList compressOutcomes (ComparablePredicate[] sorted) {
+    protected List compressOutcomes (ComparablePredicate[] sorted) {
 
 	ComparablePredicate cp = sorted[0];
-	ArrayList outcomePatterns = new ArrayList();
-	ArrayList newGroup = new ArrayList();
+	List outcomePatterns = new ArrayList();
+	List newGroup = new ArrayList();
 	for (int i=0; i<sorted.length; i++) {
 	    if (cp.compareTo(sorted[i]) == 0) {
 		newGroup.add(sorted[i]);

@@ -17,6 +17,7 @@
 //////////////////////////////////////////////////////////////////////////////   
 package opennlp.maxent;
 
+import gnu.trove.*;
 import java.util.*;
 
 /**
@@ -26,7 +27,7 @@ import java.util.*;
  * used by the GIS trainer.
  *
  * @author      Jason Baldridge
- * @version $Revision: 1.2 $, $Date: 2001/10/28 03:17:03 $
+ * @version $Revision: 1.3 $, $Date: 2001/11/15 15:42:14 $
  */
 public class DataIndexer {
     public int[][] contexts;
@@ -81,7 +82,7 @@ public class DataIndexer {
 
     private ComparableEvent[] index(List events,
                                     Map count) {
-        Map omap = new HashMap(), pmap = new HashMap();
+        Map omap = new THashMap(), pmap = new THashMap();
 
         int numEvents = events.size();
         int outcomeCount = 0;

@@ -17,6 +17,7 @@
 //////////////////////////////////////////////////////////////////////////////   
 package opennlp.maxent;
 
+import gnu.trove.*;
 import cern.colt.list.*;
 import cern.colt.map.*;
 import java.util.*;
@@ -26,11 +27,11 @@ import java.util.*;
  * Iterative Scaling procedure (implemented in GIS.java).
  *
  * @author      Tom Morton and Jason Baldridge
- * @version     $Revision: 1.2 $, $Date: 2001/11/06 12:16:58 $
+ * @version     $Revision: 1.3 $, $Date: 2001/11/15 15:42:14 $
  */
 public final class GISModel implements MaxentModel {
     private final OpenIntDoubleHashMap[] params;
-    private final HashMap pmap = new HashMap();
+    private final Map pmap;
     private final String[] ocNames;
     private final int correctionConstant;
     private final double correctionParam;
@@ -38,10 +39,6 @@ public final class GISModel implements MaxentModel {
     private final int numOutcomes;
     private final double iprob;
     private final double fval;
-
-    //private final double[] OUTSUMS;
-    //private final int[] NUMFEATS;
-
     
     public GISModel (OpenIntDoubleHashMap[] _params,
 		     String[] predLabels,
@@ -49,6 +46,7 @@ public final class GISModel implements MaxentModel {
 		     int _correctionConstant,
 		     double _correctionParam) {
 
+	pmap = new THashMap(predLabels.length);
 	for (int i=0; i<predLabels.length; i++)
 	    pmap.put(predLabels[i], new Integer(i));
 
@@ -61,8 +59,6 @@ public final class GISModel implements MaxentModel {
 	iprob = Math.log(1.0/numOutcomes);
 	fval = 1.0/correctionConstant;
 	
-	//OUTSUMS= new double[numOutcomes];
-	//NUMFEATS= new int[numOutcomes];
     }
     
 
@@ -99,7 +95,6 @@ public final class GISModel implements MaxentModel {
 		    numfeats[oid]++;
 		    outsums[oid] += fval * predParams.get(oid);
 		}
-		//params[((Integer)pmap.get(context[i])).intValue()].forEachPair(updateSums);
 	    }
 	}
 
@@ -188,7 +183,7 @@ public final class GISModel implements MaxentModel {
      *
      * <li>index 0: cern.colt.map.OpenIntDoubleHashMap[] containing the model
      *            parameters  
-     * <li>index 1: java.util.HashMap containing the mapping of model predicates
+     * <li>index 1: java.util.Map containing the mapping of model predicates
      *            to unique integers
      * <li>index 2: java.lang.String[] containing the names of the outcomes,
      *            stored in the index of the array which represents their
