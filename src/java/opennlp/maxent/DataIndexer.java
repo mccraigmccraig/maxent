@@ -27,7 +27,7 @@ import java.util.*;
  * used by the GIS trainer.
  *
  * @author      Jason Baldridge
- * @version $Revision: 1.5 $, $Date: 2001/12/27 19:20:26 $
+ * @version $Revision: 1.6 $, $Date: 2002/01/02 20:00:39 $
  */
 public class DataIndexer {
     public int[][] contexts;
@@ -35,7 +35,6 @@ public class DataIndexer {
     public int[] numTimesEventsSeen;
     public String[] predLabels;
     public String[] outcomeLabels;
-    private static final IntegerPool intPool = new IntegerPool(50);
 
     /**
      * One argument constructor for DataIndexer which calls the two argument
@@ -57,27 +56,23 @@ public class DataIndexer {
      *               observed in order to be included in the model.
      */
     public DataIndexer(EventStream eventStream, int cutoff) {
-        Map count;
+        TObjectIntHashMap predicateIndex;
         TLinkedList events;
+        ComparableEvent[] eventsToCompare;
 
-        System.out.println("Indexing events");
+        predicateIndex = new TObjectIntHashMap();
+        System.out.println("Indexing events using cutoff of " + cutoff + "\n");
 
         System.out.print("\tComputing event counts...  ");
-        count = new THashMap();
-        events = computeEventCounts(eventStream,count);
-        //for(int tid=0; tid<events.length; tid++) {
+        events = computeEventCounts(eventStream,predicateIndex,cutoff);
         System.out.println("done.");
 
-        System.out.print("\tPerforming cutoff of " + cutoff + "...  ");
-        applyCutoff(count, cutoff);
-        System.out.println("done.");
-	
         System.out.print("\tIndexing...  ");
-        ComparableEvent[] eventsToCompare = index(events,count);
+        eventsToCompare = index(events,predicateIndex);
         // done with event list
         events = null;
-        // done with predicate counts
-        count = null;
+        // done with predicates
+        predicateIndex = null;
 
         System.out.println("done.");
 
@@ -134,80 +129,81 @@ public class DataIndexer {
     }
 
     
+    /**
+     * Reads events from <tt>eventStream</tt> into a linked list.  The
+     * predicates associated with each event are counted and any which
+     * occur at least <tt>cutoff</tt> times are added to the
+     * <tt>predicatesInOut</tt> map along with a unique integer index.
+     *
+     * @param eventStream an <code>EventStream</code> value
+     * @param predicatesInOut a <code>TObjectIntHashMap</code> value
+     * @param cutoff an <code>int</code> value
+     * @return a <code>TLinkedList</code> value
+     */
     private TLinkedList computeEventCounts(EventStream eventStream,
-					   Map count) {
+                                           TObjectIntHashMap predicatesInOut,
+                                           int cutoff) {
+        TObjectIntHashMap counter = new TObjectIntHashMap();
         TLinkedList events = new TLinkedList();
+        int predicateIndex = 0;
+
         while (eventStream.hasNext()) {
             Event ev = eventStream.nextEvent();
             events.addLast(ev);
             String[] ec = ev.getContext();
             for (int j=0; j<ec.length; j++) {
-                Counter counter = (Counter)count.get(ec[j]);
-                if (counter!=null) {
-                    counter.increment();
-                } else {
-                    count.put(ec[j], new Counter());
+                if (! predicatesInOut.containsKey(ec[j])) {
+                    int count = counter.get(ec[j]) + 1;
+                    if (count >= cutoff) {
+                        predicatesInOut.put(ec[j], predicateIndex++);
+                        counter.remove(ec[j]);
+                    } else {
+                        counter.put(ec[j], count);
+                    }
                 }
             }
         }
+        predicatesInOut.trimToSize();
         return events;
     }
 
-    private void applyCutoff(Map count, int cutoff) {
-        if (cutoff == 0) {
-            return;             // nothing to do
-        }
-        
-        for (Iterator cit=count.keySet().iterator(); cit.hasNext();) {
-            String pred = (String)cit.next();
-            if (! ((Counter)count.get(pred)).passesCutoff(cutoff)) {
-                cit.remove();
-            }
-        }
-    }
-
     private ComparableEvent[] index(TLinkedList events,
-                                    Map count) {
-        Map omap = new THashMap(), pmap = new THashMap();
+                                    TObjectIntHashMap predicateIndex) {
+        TObjectIntHashMap omap = new TObjectIntHashMap();
 
         int numEvents = events.size();
         int outcomeCount = 0;
         int predCount = 0;
         ComparableEvent[] eventsToCompare = new ComparableEvent[numEvents];
+        TIntArrayList indexedContext = new TIntArrayList();
 
         for (int eventIndex=0; eventIndex<numEvents; eventIndex++) {
             Event ev = (Event)events.removeFirst();
             String[] econtext = ev.getContext();
 	    
-            Integer predID, ocID;
+            int predID, ocID;
             String oc = ev.getOutcome();
 	    
             if (omap.containsKey(oc)) {
-                ocID = (Integer)omap.get(oc);
+                ocID = omap.get(oc);
             } else {
-                ocID = intPool.get(outcomeCount++);
+                ocID = outcomeCount++;
                 omap.put(oc, ocID);
             }
 
-            List indexedContext = new ArrayList();
             for (int i=0; i<econtext.length; i++) {
                 String pred = econtext[i];
-                if (count.containsKey(pred)) {
-                    if (pmap.containsKey(pred)) {
-                        predID = (Integer)pmap.get(pred);
-                    } else {
-                        predID = intPool.get(predCount++);
-                        pmap.put(pred, predID);
-                    }
-                    indexedContext.add(predID);
+                if (predicateIndex.containsKey(pred)) {
+                    indexedContext.add(predicateIndex.get(pred));
                 }
             }
             eventsToCompare[eventIndex] =
-                new ComparableEvent(ocID.intValue(),
-                                    toIntArray(indexedContext));
+                new ComparableEvent(ocID, indexedContext.toNativeArray());
+            // recycle the TIntArrayList
+            indexedContext.resetQuick();
         }
         outcomeLabels = toIndexedStringArray(omap);
-        predLabels = toIndexedStringArray(pmap);
+        predLabels = toIndexedStringArray(predicateIndex);
         return eventsToCompare;
     }
 
@@ -217,34 +213,18 @@ public class DataIndexer {
      * values are the indices (Integers) at which the corresponding
      * labels should be inserted.
      *
-     * @param labelToIndexMap a <code>Map</code> value
+     * @param labelToIndexMap a <code>TObjectIntHashMap</code> value
      * @return a <code>String[]</code> value
      * @since maxent 1.2.6
      */
-    static String[] toIndexedStringArray(Map labelToIndexMap) {
-        String[] array = new String[labelToIndexMap.size()];
-        for (Iterator i = labelToIndexMap.keySet().iterator(); i.hasNext();) {
-            String label = (String)i.next();
-            int index = ((Integer)labelToIndexMap.get(label)).intValue();
-            array[index] = label;
-        }
+    static String[] toIndexedStringArray(TObjectIntHashMap labelToIndexMap) {
+        final String[] array = new String[labelToIndexMap.size()];
+        labelToIndexMap.forEachEntry(new TObjectIntProcedure() {
+                public boolean execute(Object str, int index) {
+                    array[index] = (String)str;
+                    return true;
+                }
+            });
         return array;
-    }
-
-    /**
-     * Utility method for turning a list of Integer objects into a
-     * native array of primitive ints.
-     *
-     * @param integers a <code>List</code> value
-     * @return an <code>int[]</code> value
-     * @since maxent 1.2.6
-     */
-    static final int[] toIntArray(List integers) {
-        int[] rv = new int[integers.size()];
-        int i = 0;
-        for (Iterator it = integers.iterator(); it.hasNext();) {
-            rv[i++] = ((Integer)it.next()).intValue();
-        }
-        return rv;
     }
 }

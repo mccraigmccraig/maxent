@@ -1,3 +1,37 @@
+1.2.7
+_____
+
+Upgraded trove dependency to 0.1.1 (includes TIntArrayList, with reset()) 
+(Eric)
+
+(opennlp.maxent.DataIndexer)
+Refactored event count computation so that the cutoff can be applied while
+events are read.  This obviates the need for a separate pass over the
+predicates between event count computation and indexing.  It also saves
+memory by reducing the amount of temporary data needed and by avoiding
+creation of instances of the Counter class.  the applyCutoff() method
+was no longer needed and so is gone. (Eric)
+
+(opennlp.maxent.DataIndexer)
+Made the event count computation + cutoff application also handle the
+assignment of unique indexes to predicates that "make the cut."  This
+saves a fair amount of time in the indexing process. (Eric)
+
+(opennlp.maxent.DataIndexer)
+Refactored the indexing implementation so that TIntArrayLists are 
+(re-)used for constructing the array of predicate references associated
+with each ComparableEvent.  Using the TIntArrayList instead of an
+ArrayList of Integers dramatically reduces the amount of garbage
+produced during indexing; it's also smaller. (Eric)
+
+(opennlp.maxent.DataIndexer)
+removed toIntArray() method, since TIntArrayList provides the same
+behavior without the cost of a loop over a List of Integers (Eric)
+
+(opennlp.maxent.DataIndexer)
+changed indexing Maps to TObjectIntHashMaps to save space in several
+places. (Eric)
+
 1.2.6
 -----
 Removed Colt dependency in favor of GNU Trove. (Eric)
