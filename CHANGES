@@ -1,3 +1,41 @@
+2.1.0
+-----
+
+
+
+
+2.0 (Major improvements)
+---
+Fixed bug where singleton events are dropped. (Tom)
+
+Added eval method so distribution could be passed in rathar then
+allocated durring each call.  Left old interface in place but modified
+it to use the new eval method.  Also made numfeats a class level
+variable. (Tom)
+
+Fixed cases where parameters which only occured with a single output
+weren't getting updated.  Ended up getting rid of pabi and cfvals
+structures.  These have been replaced with the data for a single event,
+double[] modelDistribution, and this is used to update the modifiers
+for a single event and then updated for each additional event.  This
+change made it easier to initialize the modleDistribution to the
+uniform distribution which was necessary to fix teh above problem.
+Also moved the computation of modelDistribution into it's own routine
+which is name eval and is almost exactly the same as GISModel.eval w/o
+doing the context string to integer mappings. (Tom)
+
+Made correction constant non-optional.  When the events all have the same
+number of contexts then the model tries to make the expected value of the
+correction constant nearly 0.  This is needed because while the number of
+contexts may be same it is very unlikly that all context occur with all
+outcomes. (Tom)
+
+Made nextIteration return a double which is the log-likelihood from
+the previous itteration.  At some point there isn't enough accuracy in
+a double to make further iterations useful so the routine may stop
+prematurly when the decrease in log-likelihood is too small. (Tom)
+
+
 1.2.10
 ------
 Fixed minor bug (found by Arno Erpenbeck) in BasicContextGenerator: it
