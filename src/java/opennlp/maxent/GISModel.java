@@ -25,7 +25,7 @@ import java.util.*;
  * Iterative Scaling procedure (implemented in GIS.java).
  *
  * @author      Tom Morton and Jason Baldridge
- * @version     $Revision: 1.8 $, $Date: 2002/11/20 02:44:12 $
+ * @version     $Revision: 1.9 $, $Date: 2002/12/11 16:18:41 $
  */
 public final class GISModel implements MaxentModel {
     private final TIntDoubleHashMap[] params;
@@ -199,6 +199,13 @@ public final class GISModel implements MaxentModel {
         }
         return -1;
     } 
+
+  /** Returns the number of outcomes for this model.
+   *  @return The number of outcomes.
+   **/
+  public int getNumOutcomes() {
+    return(numOutcomes);
+  }
 
     
     /**
