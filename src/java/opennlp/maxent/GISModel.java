@@ -25,7 +25,7 @@ import java.util.*;
  * Iterative Scaling procedure (implemented in GIS.java).
  *
  * @author      Tom Morton and Jason Baldridge
- * @version     $Revision: 1.7 $, $Date: 2002/04/19 09:29:24 $
+ * @version     $Revision: 1.8 $, $Date: 2002/11/20 02:44:12 $
  */
 public final class GISModel implements MaxentModel {
     private final TIntDoubleHashMap[] params;
@@ -37,6 +37,8 @@ public final class GISModel implements MaxentModel {
     private final int numOutcomes;
     private final double iprob;
     private final double fval;
+
+    private int[] numfeats;
     
     public GISModel (TIntDoubleHashMap[] _params,
                      String[] predLabels,
@@ -56,11 +58,9 @@ public final class GISModel implements MaxentModel {
         numOutcomes = ocNames.length;
         iprob = Math.log(1.0/numOutcomes);
         fval = 1.0/correctionConstant;
-	
+        numfeats = new int[numOutcomes];
     }
-    
 
-    
     /**
      * Use this model to evaluate a context and return an array of the
      * likelihood of each outcome given that context.
@@ -74,26 +74,39 @@ public final class GISModel implements MaxentModel {
      *  	      getOutcome(int i).
      */
     public final double[] eval(String[] context) {
-        double[] outsums = new double[numOutcomes];
-        int[] numfeats = new int[numOutcomes];
-
-        for (int oid=0; oid<numOutcomes; oid++) {
+      return(eval(context,new double[numOutcomes]));
+    }
+    
+    /**
+     * Use this model to evaluate a context and return an array of the
+     * likelihood of each outcome given that context.
+     *
+     * @param context The names of the predicates which have been observed at
+     *                the present decision point.
+     * @param outsums This is where the distribution is stored.
+     * @return        The normalized probabilities for the outcomes given the
+     *                context. The indexes of the double[] are the outcome
+     *                ids, and the actual string representation of the
+     *                outcomes can be obtained from the method
+     *  	      getOutcome(int i).
+     */
+    public final double[] eval(String[] context, double[] outsums) {
+	int[] activeOutcomes;
+	for (int oid=0; oid<numOutcomes; oid++) {
             outsums[oid] = iprob;
             numfeats[oid] = 0;
         }
-
-        int[] activeOutcomes;
         for (int i=0; i<context.length; i++) {
-            if (pmap.containsKey(context[i])) {
-                TIntDoubleHashMap predParams =
-                    params[pmap.get(context[i])];
-                activeOutcomes = predParams.keys();
-                for (int j=0; j<activeOutcomes.length; j++) {
-                    int oid = activeOutcomes[j];
-                    numfeats[oid]++;
-                    outsums[oid] += fval * predParams.get(oid);
-                }
-            }
+	  if (pmap.containsKey(context[i])) {
+	    TIntDoubleHashMap predParams =
+	      params[pmap.get(context[i])];
+	    activeOutcomes = predParams.keys();
+	    for (int j=0; j<activeOutcomes.length; j++) {
+	      int oid = activeOutcomes[j];
+	      numfeats[oid]++;
+	      outsums[oid] += fval * predParams.get(oid);
+	    }
+	  }
         }
 
         double normal = 0.0;
