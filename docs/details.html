@@ -1,0 +1,40 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<meta name="GENERATOR" content="Mozilla/4.5 [en] (X11; I; SunOS 5.5.1 sun4u) [Netscape]">
+</head>
+<body text="#000000" bgcolor="#FFFFFF" link="#0000EE" vlink="#551A8B" alink="#FF0000">
+We have tried to make the quipu.maxent implementation easy to use.&nbsp;
+To create a model, one needs (of course) the training data, and then implementations
+of two interfaces in the quipu.maxent package, EventStream and ContextGenerator.&nbsp;
+These have fairly simple specifications, and example implementations can
+be found in the <a href="http://grok.sourceforge.net">OpenNLP Grok Library</a>
+preprocessing components.&nbsp; More details are given in the quipu.maxent
+<a href="howto.html">HOWTO</a>.
+<p>We have also set in place some interfaces and code to make it easier
+to automate the training and evaluation process (the Evalable interface
+and the TrainEval class).&nbsp; It is not necessary to use this functionality,
+but if you do you'll find it much easier to see how well your models are
+doing.&nbsp; The quipu.grok.preprocess.namefind package is an example of
+a maximum entropy component which uses this functionality.
+<p>We have managed to use several techniques to reduce the size of the
+models when writing them to disk, which also means that reading in a model
+for use is much quicker than with less compact encodings of the model.&nbsp;
+This was especially important to us since we use many maxent models in
+the Grok library, and we wanted the start up time and the physical size
+of the library to be as minimal as possible. As of version 1.2.0,
+maxent has an io package which greatly simplifies the process of
+loading and saving models in different formats.
+<p>The opennlp.maxent package was built by <a href="http://www.cogsci.ed.ac.uk/~jmb/">Jason
+Baldridge</a>, <a href="http://www.cis.upenn.edu/~tsmorton/">Tom Morton</a>,
+and <a href="http://www.cogsci.ed.ac.uk/~gbierner">Gann Bierner</a>.&nbsp;
+We owe a big thanks to <a href="http://www.research.ibm.com/people/a/adwaitr/">Adwait
+Ratnaparkhi</a> for his work on maximum entropy models for natural language
+processing applications.&nbsp; His <a href="ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z">introduction
+to maxent for NLP</a> and <a href="ftp://ftp.cis.upenn.edu/pub/ircs/tr/98-15/98-15.ps.gz">dissertation</a>
+are what really made opennlp.maxent and our Grok maxent components
+(POS tagger, end of sentence detector, tokenizer, name finder) possible!
+<br>&nbsp;
+</body>
+</html>

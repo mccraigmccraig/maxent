@@ -1,0 +1,57 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<meta name="GENERATOR" content="Mozilla/4.5 [en] (X11; I; SunOS 5.5.1 sun4u) [Netscape]">
+</head>
+<body text="#000000" bgcolor="#FFFFFF" link="#0000EE" vlink="#551A8B" alink="#FF0000">
+
+<center><b><font size=+1>What is maximum entropy?</font></b></center>
+
+<p>It will be simplest to quote from <a href="http://www-nlp.Stanford.EDU/~manning/">Manning</a>
+and <a href="ftp://parcftp.xerox.com/pub/qca/schuetze.html">Schutze</a>*
+(p. 589):
+<blockquote>Maximum entropy modeling is a framework for integrating information
+from many heterogeneous information sources for classification.&nbsp; The
+data for a&nbsp; classification problem is described as a (potentially
+large) number of features.&nbsp; These features can be quite complex and
+allow the experimenter to make use of prior knowledge about what types
+of informations are expected to be important for classification. Each feature
+corresponds to a constraint on the model.&nbsp; We then compute the maximum
+entropy model, the model with the maximum entropy of all the models that
+satisfy the constraints.&nbsp; This term may seem perverse, since we have
+spent most of the book trying to minimize the (cross) entropy of models,
+but the idea is that we do not want to go beyond the data.&nbsp; If we
+chose a model with less entropy, we would add `information' constraints
+to the model that are not justified by the empirical evidence available
+to us. Choosing the maximum entropy model is motivated by the desire to
+preserve as much uncertainty as possible.</blockquote>
+So that gives a rough idea of what the maximum entropy framework is.&nbsp;
+Don't assume anything about your probability distribution other than what
+you have observed.&nbsp;
+<p>On the engineering level, using maxent is an excellent way of creating
+programs which perform very difficult classification tasks very well.&nbsp;
+For example,&nbsp; precision and recall figures for programs using maxent
+models have reached (or are) the state of the art on tasks like part of
+speech tagging, sentence detection, prepositional phrase attachment, and
+named entity recognition.&nbsp; On the engineering level, an added benefit
+is that the person creating a maxent model only needs to inform the training
+procedure of the event space, and need not worry about independence between
+features.
+<p>While I am only personally involved in the use of maxent models in natural
+language processing, the framework is certainly quite general and useful
+for a much wider variety of fields.&nbsp; In fact, maximum entropy modeling
+was originally developed for statistical physics.
+<p>For a very in-depth discussion of how maxent can be used in natural
+language processing, I recommend reading <a href="http://www.research.ibm.com/people/a/adwaitr/">Adwait
+Ratnaparkhi</a>'s <a href="ftp://ftp.cis.upenn.edu/pub/ircs/tr/98-15/98-15.ps.gz">dissertation.&nbsp;</a>&nbsp;
+Also,&nbsp; check out Berger, Della Pietra, and Della Pietra's paper <a href="http://citeseer.nj.nec.com/cs?profile=314155%2C67650%2C1%2C0.25%2CDownload&rd=http%3A//www.cs.cmu.edu/%7Eaberger/ps/compling.ps">A
+Maximum Entropy Approach to Natural Language Processing,</a> which provides
+an excellent introduction and discussion of the framework.
+
+<p><i>*<a href="http://www.sultry.arts.usyd.edu.au/fsnlp/promo/">Foundations
+of statistical natural language processing </a></i>. Christopher D. Manning,
+Hinrich Schutze.
+<br>Cambridge, Mass. : MIT Press, c1999.
+</body>
+</html>
