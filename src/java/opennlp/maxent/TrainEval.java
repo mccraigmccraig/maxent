@@ -26,7 +26,7 @@ import java.util.*;
  * interface.
  *
  * @author      Gann Bierner
- * @version     $Revision: 1.2 $, $Date: 2001/11/14 17:39:56 $
+ * @version     $Revision: 1.3 $, $Date: 2002/04/25 15:01:07 $
  */
 public class TrainEval {
     
@@ -95,22 +95,46 @@ public class TrainEval {
 		break;
 	    }
 	}
+
+	int lastIndex = g.getOptind();
+	if (lastIndex >= args.length) {
+	    System.out.println("This is a usage message from opennlp.maxent.TrainEval. You have called the training procedure for a maxent application with the incorrect arguments.  These are the options:");
+
+	    System.out.println("\nOptions for defining the model location and name:");
+	    System.out.println(" -d <directoryName>");
+	    System.out.println("\tThe directory in which to store the model.");
+	    System.out.println(" -s <modelName>");
+	    System.out.println("\tThe name of the model, e.g. EnglishPOS.bin.gz or NameFinder.txt.");
+	    
+	    System.out.println("\nOptions for training:");
+	    System.out.println(" -c <cutoff>");
+	    System.out.println("\tAn integer cutoff level to reduce infrequent contextual predicates.");
+	    System.out.println(" -t\tTrain a model. If absent, the given model will be loaded and evaluated.");
+	    System.out.println("\nOptions for evaluation:");
+	    System.out.println(" -l\t the evaluation method of class that uses the model. If absent, TrainEval's eval method is used.");
+	    System.out.println(" -v\t verbose.");
+	    System.out.println("\nThe final argument is the data file to be loaded and used for either training or evaluation.");
+	    System.out.println("\nAs an example for training:\n java opennlp.grok.preprocess.postag.POSTaggerME -t -d ./ -s EnglishPOS.bin.gz -c 7 postag.data");
+	    System.exit(0);
+	}
+
+	FileReader datafr = new FileReader(args[lastIndex]);
 	
-	FileReader datafr = new FileReader(args[g.getOptind()]);
-	
-	if(train) {
+	if (train) {
 	    MaxentModel m =
 		train(new EventCollectorAsStream(e.getEventCollector(datafr)),
 		      cutoff);
-	    new BinaryGISModelWriter((GISModel)m, new File(dir+stem)).persist();
+	    new SuffixSensitiveGISModelWriter((GISModel)m,
+					      new File(dir+stem)).persist();
 	}
 	else {
 	    MaxentModel model =
-		new BinaryGISModelReader(new File(dir+stem)).getModel();
-	    if(local)
+		new SuffixSensitiveGISModelReader(new File(dir+stem)).getModel();
+	    if (local) {
 		e.localEval(model, datafr, e, verbose);
-	    else
+	    } else {
 		eval(model, datafr, e, verbose);
+	    }
 	}
     }
 
