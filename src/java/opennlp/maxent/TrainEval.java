@@ -26,7 +26,7 @@ import java.util.*;
  * interface.
  *
  * @author      Gann Bierner
- * @version     $Revision: 1.1 $, $Date: 2001/10/23 14:06:53 $
+ * @version     $Revision: 1.2 $, $Date: 2001/11/14 17:39:56 $
  */
 public class TrainEval {
     
@@ -60,7 +60,7 @@ public class TrainEval {
     }
 
     public static MaxentModel train(EventStream events, int cutoff) {
-	return GIS.trainModel(events, cutoff, 100);
+	return GIS.trainModel(events, 100, cutoff);
     }
 
     public static void run(String[] args, Evalable e) throws IOException {
