@@ -1,4 +1,4 @@
-<!-- $Id: build.xml,v 1.15 2002/01/03 16:14:41 jasonbaldridge Exp $ -->
+<!-- $Id: build.xml,v 1.16 2002/01/14 14:58:14 jasonbaldridge Exp $ -->
 
 <project default="package" basedir=".">
 
@@ -9,7 +9,7 @@
     <tstamp/>
     <property name="Name" value="Maxent"/>
     <property name="name" value="maxent"/>
-    <property name="version" value="1.2.6"/>
+    <property name="version" value="1.2.7"/>
     <property name="year" value="2002"/>
 
     <echo message="----------- ${Name} ${version} [${year}] ------------"/>
