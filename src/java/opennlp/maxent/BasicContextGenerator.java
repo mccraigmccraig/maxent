@@ -29,7 +29,7 @@ import java.util.*;
  * </p>
  * 
  * @author      Jason Baldridge
- * @version     $Revision: 1.1 $, $Date: 2001/11/20 17:05:37 $
+ * @version     $Revision: 1.2 $, $Date: 2002/04/30 08:48:35 $
  */
 public class BasicContextGenerator implements ContextGenerator {
 
@@ -38,15 +38,15 @@ public class BasicContextGenerator implements ContextGenerator {
      */
     public String[] getContext(Object o) {
 	String s = (String)o;
-	int prevIndex = 0;
+	int prevIndex = -1;
 	int index = s.indexOf(' ');
 	List cuts = new ArrayList();
 	while (index != -1) {
-	    cuts.add(s.substring(prevIndex, index));
+	    cuts.add(s.substring(prevIndex+1, index));
 	    prevIndex = index;
 	    index = s.indexOf(' ', ++index);
 	}
-	cuts.add(s.substring(prevIndex, s.length()));
+	cuts.add(s.substring(prevIndex+1, s.length()));
 	return (String[])cuts.toArray(new String[cuts.size()]);
     }
  

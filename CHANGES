@@ -1,5 +1,7 @@
 1.2.10
 ------
+Fixed minor bug (found by Arno Erpenbeck) in BasicContextGenerator: it
+was retaining whitespace in the contextual predicates. (Jason)
 
 Added error message to TrainEval's eval() method. (Jason)
 
