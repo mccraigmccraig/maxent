@@ -31,7 +31,7 @@ import java.util.zip.*;
  * and is available at <a href ="ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z"><code>ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z</code></a>. 
  *
  * @author  Jason Baldridge
- * @version $Revision: 1.5 $, $Date: 2002/04/09 09:15:10 $
+ * @version $Revision: 1.6 $, $Date: 2002/04/23 16:10:07 $
  */
 class GISTrainer {
 
@@ -235,7 +235,7 @@ class GISTrainer {
      * @param eventStream The EventStream holding the data on which this model
      *                    will be trained.
      * @param iterations  The number of GIS iterations to perform.
-     * @param cutoff      The number of times a feature must be seen in order
+     * @param cutoff      The number of times a predicate must be seen in order
      *                    to be relevant for training.
      * @return The newly trained model, which can be used immediately or saved
      *         to disk using an opennlp.maxent.io.GISModelWriter object.
