@@ -19,7 +19,6 @@ package opennlp.maxent;
 
 import java.util.*;
 
-
 /**
  * An indexer for maxent model data which handles cutoffs for uncommon
  * contextual predicates and provides a unique integer index for each of the
@@ -27,7 +26,7 @@ import java.util.*;
  * used by the GIS trainer.
  *
  * @author      Jason Baldridge
- * @version $Revision: 1.1 $, $Date: 2001/10/23 14:06:53 $
+ * @version $Revision: 1.2 $, $Date: 2001/10/28 03:17:03 $
  */
 public class DataIndexer {
     public int[][] contexts;
@@ -35,6 +34,7 @@ public class DataIndexer {
     public int[] numTimesEventsSeen;
     public String[] predLabels;
     public String[] outcomeLabels;
+    private static final IntegerPool intPool = new IntegerPool(50);
 
     /**
      * One argument constructor for DataIndexer which calls the two argument
@@ -44,7 +44,108 @@ public class DataIndexer {
      *               seen in the training data.
      */     
     public DataIndexer(EventStream eventStream) {
-	this(eventStream, 0);
+        this(eventStream, 0);
+    }
+
+    private List computeEventCounts(EventStream eventStream,
+                                    Map count) {
+        List events = new ArrayList();
+        while (eventStream.hasNext()) {
+            Event ev = eventStream.nextEvent();
+            events.add(ev);
+            String[] ec = ev.getContext();
+            for (int j=0; j<ec.length; j++) {
+                Counter counter = (Counter)count.get(ec[j]);
+                if (counter!=null) {
+                    counter.increment();
+                } else {
+                    count.put(ec[j], new Counter());
+                }
+            }
+        }
+        return events;
+    }
+
+    private void applyCutoff(Map count, int cutoff) {
+        if (cutoff == 0) {
+            return;             // nothing to do
+        }
+        
+        for (Iterator cit=count.keySet().iterator(); cit.hasNext();) {
+            String pred = (String)cit.next();
+            if (! ((Counter)count.get(pred)).passesCutoff(cutoff)) {
+                cit.remove();
+            }
+        }
+    }
+
+    private ComparableEvent[] index(List events,
+                                    Map count) {
+        Map omap = new HashMap(), pmap = new HashMap();
+
+        int numEvents = events.size();
+        int outcomeCount = 0;
+        int predCount = 0;
+        int[] uncompressedOutcomeList = new int[numEvents];   
+        List uncompressedContexts = new ArrayList();
+        
+        for (int eventIndex=0; eventIndex<numEvents; eventIndex++) {
+            Event ev = (Event)events.get(eventIndex);
+            String[] econtext = ev.getContext();
+	    
+            Integer predID, ocID;
+            String oc = ev.getOutcome();
+	    
+            if (omap.containsKey(oc)) {
+                ocID = (Integer)omap.get(oc);
+            } else {
+                ocID = intPool.get(outcomeCount++);
+                omap.put(oc, ocID);
+            }
+
+            List indexedContext = new ArrayList();
+            for (int i=0; i<econtext.length; i++) {
+                String pred = econtext[i];
+                if (count.containsKey(pred)) {
+                    if (pmap.containsKey(pred)) {
+                        predID = (Integer)pmap.get(pred);
+                    } else {
+                        predID = intPool.get(predCount++);
+                        pmap.put(pred, predID);
+                    }
+                    indexedContext.add(predID);
+                }
+            }
+            uncompressedContexts.add(indexedContext);
+            uncompressedOutcomeList[eventIndex] = ocID.intValue();
+        }
+        outcomeLabels = new String[omap.size()];
+        for (Iterator i=omap.keySet().iterator(); i.hasNext();) {
+            String oc = (String)i.next();
+            outcomeLabels[((Integer)omap.get(oc)).intValue()] = oc;
+        }
+        omap = null;
+	
+        predLabels = new String[pmap.size()];
+        for (Iterator i = pmap.keySet().iterator(); i.hasNext();) {
+            String n = (String)i.next();
+            predLabels[((Integer)pmap.get(n)).intValue()] = n;
+        }
+        pmap = null;
+        
+        ComparableEvent[] eventsToCompare = new ComparableEvent[numEvents];
+
+        for (int i=0; i<numEvents; i++) {
+            List ecLL = (List)uncompressedContexts.get(i);
+            int[] ecInts = new int[ecLL.size()];
+            for (int j=0; j<ecInts.length; j++) {
+                ecInts[j] = ((Integer)ecLL.get(j)).intValue();
+            }
+            eventsToCompare[i] =
+                new ComparableEvent(uncompressedOutcomeList[i], ecInts);
+        }
+
+        return eventsToCompare;
     }
     
     /**
@@ -56,145 +157,66 @@ public class DataIndexer {
      *               observed in order to be included in the model.
      */
     public DataIndexer(EventStream eventStream, int cutoff) {
-	System.out.println("Indexing events");
+        Map count;
+        List events;
 
-	System.out.print("\tComputing event counts...  ");
-	LinkedList events = new LinkedList();
-	HashMap count = new HashMap();
-	//for(int tid=0; tid<events.length; tid++) {
-	while (eventStream.hasNext()) {
-	    Event ev = eventStream.nextEvent();
-	    events.addLast(ev);
-	    String[] ec = ev.getContext();
-	    for (int j=0; j<ec.length; j++) {
-		Counter counter = (Counter)count.get(ec[j]);
-		if (counter!=null) {
-		    counter.increment();
-		} else {
-		    count.put(ec[j], new Counter());
-		}
-	    }
-	}
-	System.out.println("done.");
+        System.out.println("Indexing events");
 
-	System.out.print("\tPerforming cutoff of " + cutoff + "...  ");
-	HashSet useablePreds = new HashSet();
-	String pred;
-	for (Iterator cit=count.keySet().iterator(); cit.hasNext();) {
-	    pred = (String)cit.next();
-	    if (((Counter)count.get(pred)).passesCutoff(cutoff))
-		useablePreds.add(pred);
-	}
-	System.out.println("done.");
+        System.out.print("\tComputing event counts...  ");
+        count = new HashMap();
+        events = computeEventCounts(eventStream,count);
+        //for(int tid=0; tid<events.length; tid++) {
+        System.out.println("done.");
+
+        System.out.print("\tPerforming cutoff of " + cutoff + "...  ");
+        applyCutoff(count, cutoff);
+        System.out.println("done.");
 	
-	System.out.print("\tIndexing...  ");
-	HashMap omap = new HashMap();
-	HashMap pmap = new HashMap();
+        System.out.print("\tIndexing...  ");
+        ComparableEvent[] eventsToCompare = index(events,count);
+        // done with event list
+        events = null;
+        // done with predicate counts
+        count = null;
 
-	int numEvents = events.size();
-	int[] uncompressedOutcomeList = new int[numEvents];   
-	LinkedList uncompressedContexts = new LinkedList();
+        System.out.println("done.");
 
-	int outcomeCount = 0;
-	int predCount = 0;
-	for (int eventIndex=0; eventIndex<numEvents; eventIndex++) {
-	    Event ev = (Event)events.removeFirst();
-	    String[] econtext = ev.getContext();
-	    
-	    Integer predID, ocID;
-	    String oc = ev.getOutcome();
-	    
-	    if (omap.containsKey(oc)) {
-		ocID = (Integer)omap.get(oc);
-	    } else {
-		ocID = new Integer(outcomeCount++);
-		omap.put(oc, ocID);
-	    }
+        System.out.print("Sorting and merging events... ");
+        Arrays.sort(eventsToCompare);
 
-	    LinkedList indexedContext = new LinkedList();
-	    for (int i=0; i<econtext.length; i++) {
-		pred = econtext[i];
-		if (useablePreds.contains(pred)) {
-		    if (pmap.containsKey(pred)) {
-			predID = (Integer)pmap.get(pred);
-		    } else {
-			predID = new Integer(predCount++);
-			pmap.put(pred, predID);
-		    }
-		    indexedContext.add(predID);
-		}
-	    }
-	    uncompressedContexts.addLast(indexedContext);
-	    uncompressedOutcomeList[eventIndex] = ocID.intValue();
-	}
+        ComparableEvent ce = eventsToCompare[0];
+        List uniqueEvents = new ArrayList();
+        List newGroup = new ArrayList();
+        int numEvents = eventsToCompare.length;
+        for (int i=0; i<numEvents; i++) {
+            if (ce.compareTo(eventsToCompare[i]) == 0) {
+                newGroup.add(eventsToCompare[i]);
+            } else {	    
+                ce = eventsToCompare[i];
+                uniqueEvents.add(newGroup);
+                newGroup = new ArrayList();
+                newGroup.add(eventsToCompare[i]);
+            }
+        }
+        uniqueEvents.add(newGroup);
 
-	useablePreds = null;
+        int numUniqueEvents = uniqueEvents.size();
+
+        System.out.println("done. Reduced " + eventsToCompare.length
+                           + " events to " + numUniqueEvents + ".");
+
+        contexts = new int[numUniqueEvents][];
+        outcomeList = new int[numUniqueEvents];
+        numTimesEventsSeen = new int[numUniqueEvents];
+
+        for (int i=0; i<numUniqueEvents; i++) {
+            List group = (List)uniqueEvents.get(i);
+            numTimesEventsSeen[i] = group.size();
+            ComparableEvent nextCE = (ComparableEvent)group.get(0);
+            outcomeList[i] = nextCE.outcome;
+            contexts[i] = nextCE.predIndexes;
+        }
 	
-	outcomeLabels = new String[omap.size()];
-	for (Iterator i=omap.keySet().iterator(); i.hasNext();) {
-	    String oc = (String)i.next();
-	    outcomeLabels[((Integer)omap.get(oc)).intValue()] = oc;
-	}
-	omap = null;
-	
-	predLabels = new String[pmap.size()];
-	for (Iterator i = pmap.keySet().iterator(); i.hasNext();) {
-	    String n = (String)i.next();
-	    predLabels[((Integer)pmap.get(n)).intValue()] = n;
-	}
-	pmap = null;
-	
-	ComparableEvent[] eventsToCompare = new ComparableEvent[numEvents];
-
-	for (int i=0; i<numEvents; i++) {
-	    LinkedList ecLL = (LinkedList)uncompressedContexts.removeFirst();
-	    int[] ecInts = new int[ecLL.size()];
-	    for (int j=0; j<ecInts.length; j++)
-		ecInts[j] = ((Integer)ecLL.removeFirst()).intValue();
-	    eventsToCompare[i] =
-		new ComparableEvent(uncompressedOutcomeList[i], ecInts);
-	}
-	uncompressedContexts = null;
-	uncompressedOutcomeList = null;
-	
-	System.out.println("done.");
-
-	System.out.print("Sorting and merging events... ");
-	Arrays.sort(eventsToCompare);
-
-	ComparableEvent ce = eventsToCompare[0];
-	LinkedList uniqueEvents = new LinkedList();
-	LinkedList newGroup = new LinkedList();
-	for (int i=0; i<numEvents; i++) {
-	    if (ce.compareTo(eventsToCompare[i]) == 0) {
-		  newGroup.addLast(eventsToCompare[i]);
-	    } else {	    
-		  ce = eventsToCompare[i];
-		  uniqueEvents.addLast(newGroup);
-		  newGroup = new LinkedList();
-		  newGroup.addLast(eventsToCompare[i]);
-	    }
-	}
-	uniqueEvents.addLast(newGroup);
-
-	int numUniqueEvents = uniqueEvents.size();
-
-	System.out.println("done. Reduced " + eventsToCompare.length
-			   + " events to " + numUniqueEvents + ".");
-
-	contexts = new int[numUniqueEvents][];
-	outcomeList = new int[numUniqueEvents];
-	numTimesEventsSeen = new int[numUniqueEvents];
-
-	for (int i=0; i<numUniqueEvents; i++) {
-	    LinkedList group = (LinkedList)uniqueEvents.removeFirst();
-	    numTimesEventsSeen[i] = group.size();
-	    ComparableEvent nextCE = (ComparableEvent)group.getFirst();
-	    outcomeList[i] = nextCE.outcome;
-	    contexts[i] = nextCE.predIndexes;
-	}
-	
-	System.out.println("Done indexing.");
+        System.out.println("Done indexing.");
     }
-    
 }
