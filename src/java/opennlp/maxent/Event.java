@@ -22,9 +22,9 @@ package opennlp.maxent;
  * contextual predicates and an outcome.
  *
  * @author      Jason Baldridge
- * @version     $Revision: 1.1 $, $Date: 2001/10/23 14:06:53 $
+ * @version     $Revision: 1.2 $, $Date: 2001/11/15 18:08:20 $
  */
-public class Event {
+public class Event extends gnu.trove.TLinkableAdaptor {
     private String outcome;
     private String[] context;
     
