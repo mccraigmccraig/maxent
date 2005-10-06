@@ -28,32 +28,32 @@ import java.util.*;
  * extending class to define precisely how the data should be stored.
  *
  * @author      Jason Baldridge
- * @version     $Revision: 1.5 $, $Date: 2004/06/11 20:51:36 $
+ * @version     $Revision: 1.6 $, $Date: 2005/10/06 11:04:16 $
  */
 public abstract class GISModelWriter {
-    protected TIntParamHashMap[] PARAMS;
+    protected Context[] PARAMS;
     protected String[] OUTCOME_LABELS;
     protected int CORRECTION_CONSTANT;
     protected double CORRECTION_PARAM;
     protected String[] PRED_LABELS;
 
     public GISModelWriter (GISModel model) {
-
-    	Object[] data = model.getDataStructures();
-
-	PARAMS = (TIntParamHashMap[])data[0];
-	TObjectIntHashMap pmap = (TObjectIntHashMap)data[1];
-	OUTCOME_LABELS = (String[])data[2];
-	CORRECTION_CONSTANT = ((Integer)data[3]).intValue();
-	CORRECTION_PARAM = ((Double)data[4]).doubleValue();
-
-	PRED_LABELS = new String[pmap.size()];
-	pmap.forEachEntry(new TObjectIntProcedure() {
-	    public boolean execute (Object pred, int index) {
-		PRED_LABELS[index] = (String)pred;
-		return true;
-	    }
-	});
+      
+      Object[] data = model.getDataStructures();
+      
+      PARAMS = (Context[]) data[0];
+      TObjectIntHashMap pmap = (TObjectIntHashMap)data[1];
+      OUTCOME_LABELS = (String[])data[2];
+      CORRECTION_CONSTANT = ((Integer)data[3]).intValue();
+      CORRECTION_PARAM = ((Double)data[4]).doubleValue();
+      
+      PRED_LABELS = new String[pmap.size()];
+      pmap.forEachEntry(new TObjectIntProcedure() {
+        public boolean execute (Object pred, int index) {
+          PRED_LABELS[index] = (String)pred;
+          return true;
+        }
+      });
     }
 
     protected abstract void writeUTF (String s) throws java.io.IOException;
@@ -123,25 +123,26 @@ public abstract class GISModelWriter {
 
         int numParams = 0;	
         for (int pid=0; pid<PARAMS.length; pid++) {
-            int[] predkeys = PARAMS[pid].keys();
-            Arrays.sort(predkeys);
-	    
+            int[] predkeys = PARAMS[pid].getOutcomes();
+            //Arrays.sort(predkeys);
             int numActive = predkeys.length;
+            int[] activeOutcomes = predkeys;
+            double[] activeParams = PARAMS[pid].getParameters();
 
             numParams += numActive;
-            int[] activeOCs = new int[numActive];
+            /*
             double[] activeParams = new double[numActive];
-	    
+            
             int id = 0;	   
             for (int i=0; i < predkeys.length; i++) {
                 int oid = predkeys[i];
-                activeOCs[id] = oid;
-                activeParams[id] = PARAMS[pid].get(oid);
+                activeOutcomes[id] = oid;
+                activeParams[id] = PARAMS[pid].getParams(oid);
                 id++;
             }
-	    
+            */
             sortPreds[pid] = new ComparablePredicate(PRED_LABELS[pid],
-                                                     activeOCs,
+                                                     activeOutcomes,
                                                      activeParams);
         }
 		

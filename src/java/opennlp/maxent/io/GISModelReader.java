@@ -19,6 +19,7 @@ package opennlp.maxent.io;
 
 import java.util.StringTokenizer;
 
+import opennlp.maxent.Context;
 import opennlp.maxent.GISModel;
 import opennlp.maxent.TIntParamHashMap;
 
@@ -26,7 +27,7 @@ import opennlp.maxent.TIntParamHashMap;
  * Abstract parent class for readers of GISModels.
  *
  * @author      Jason Baldridge
- * @version     $Revision: 1.5 $, $Date: 2004/06/11 20:51:36 $
+ * @version     $Revision: 1.6 $, $Date: 2005/10/06 11:04:16 $
  */
 public abstract class GISModelReader {
     /**
@@ -79,7 +80,7 @@ public abstract class GISModelReader {
         String[] outcomeLabels = getOutcomes();
         int[][] outcomePatterns = getOutcomePatterns();
         String[] predLabels = getPredicates();
-        TIntParamHashMap[] params = getParameters(outcomePatterns);
+        Context[] params = getParameters(outcomePatterns);
  	
         return new GISModel(params,
                             predLabels,
@@ -134,23 +135,34 @@ public abstract class GISModelReader {
         return predLabels;
     }
 
-    protected TIntParamHashMap[] getParameters (int[][] outcomePatterns)
-        throws java.io.IOException {
-	
-        TIntParamHashMap[] params = new TIntParamHashMap[NUM_PREDS];
-
-        int pid=0;
-        for (int i=0; i<outcomePatterns.length; i++) {
-            for (int j=0; j<outcomePatterns[i][0]; j++) {
-                params[pid] = new TIntParamHashMap();
-                for (int k=1; k<outcomePatterns[i].length; k++) {
-                    double d = readDouble();
-                    params[pid].put(outcomePatterns[i][k], d);
-                }
-                params[pid].compact();
-                pid++;
-            }
+    /**
+     * Reads the parameters from a file and populates an array of context objects.
+     * @param outcomePatterns The outcomes patterns for the model.  The first index refers to which 
+     * outcome pattern (a set of outcomes that occurs with a context) is being specified.  The
+     * second index specifies the number of contexts which use this pattern at index 0, and the
+     * index of each outcomes which make up this pattern in indicies 1-n.  
+     * @return An array of context objects.
+     * @throws java.io.IOException when the model file does not match the outcome patterns or can not be read.
+     */
+    protected Context[] getParameters (int[][] outcomePatterns) throws java.io.IOException {
+      Context[] params = new Context[NUM_PREDS];
+      int pid=0;
+      for (int i=0; i<outcomePatterns.length; i++) {
+        //construct outcome pattern
+        int[] outcomePattern = new int[outcomePatterns[i].length-1];
+        for (int k=1; k<outcomePatterns[i].length; k++) {
+          outcomePattern[k-1] = outcomePatterns[i][k];
         }
-        return params;
+        //populate parameters for each context which uses this outcome pattern. 
+        for (int j=0; j<outcomePatterns[i][0]; j++) {
+          double[] contextParameters = new double[outcomePatterns[i].length-1];
+          for (int k=1; k<outcomePatterns[i].length; k++) {
+            contextParameters[k-1] = readDouble();
+          }
+          params[pid] = new Context(outcomePattern,contextParameters);
+          pid++;
+        }
+      }
+      return params;
     }
 }
