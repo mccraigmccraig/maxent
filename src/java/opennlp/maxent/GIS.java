@@ -22,7 +22,7 @@ package opennlp.maxent;
  * GISModels.
  *
  * @author  Jason Baldridge
- * @version $Revision: 1.4 $, $Date: 2003/12/13 16:41:29 $
+ * @version $Revision: 1.5 $, $Date: 2005/10/06 11:03:47 $
  */
 public class GIS {
     /**
@@ -32,17 +32,10 @@ public class GIS {
      */
     public static boolean PRINT_MESSAGES = true;
 
-    /**
-     * Defines whether the created trainer will use smoothing while training
-     * the model. This can improve model accuracy, though training will
-     * potentially take longer and use more memory.  Model size will also be
-     * larger. Set true if smoothing is desired, false if not.
+    /** If we are using smoothing, this is used as the "number" of
+     * times we want the trainer to imagine that it saw a feature that it
+     * actually didn't see.  Defaulted to 0.1.
      */
-    public static boolean SMOOTHING = false;
-
-    // If we are using smoothing, this is used as the "number" of
-    // times we want the trainer to imagine that it saw a feature that it
-    // actually didn't see.  Defaulted to 0.1.
     public static double SMOOTHING_OBSERVATION = 0.1;
     
     /**
@@ -55,7 +48,7 @@ public class GIS {
      *         to disk using an opennlp.maxent.io.GISModelWriter object.
      */
     public static GISModel trainModel(EventStream eventStream) {
-        return trainModel(eventStream, 100, 0, PRINT_MESSAGES);
+        return trainModel(eventStream, 100, 0, false,PRINT_MESSAGES);
     }
 
     /**
@@ -72,43 +65,50 @@ public class GIS {
     public static GISModel trainModel(EventStream eventStream,
                                       int iterations,
                                       int cutoff) {
-        return trainModel(eventStream, iterations, cutoff, PRINT_MESSAGES);
+        return trainModel(eventStream, iterations, cutoff, false,PRINT_MESSAGES);
     }
     
     /**
      * Train a model using the GIS algorithm.
-     *
      * @param eventStream The EventStream holding the data on which this model
      *                    will be trained.
      * @param iterations  The number of GIS iterations to perform.
      * @param cutoff      The number of times a feature must be seen in order
      *                    to be relevant for training.
-     * @param printMessagesWhileTraining write training status messages
-     *                                   to STDOUT.
+     * @param smoothing   Defines whether the created trainer will use smoothing 
+     *                    while training the model.
+     * @param printMessagesWhileTraining Determines whether training status messages are written to STDOUT. 
      * @return The newly trained model, which can be used immediately or saved
      *         to disk using an opennlp.maxent.io.GISModelWriter object.
      */
     public static GISModel trainModel(EventStream eventStream,
-                                      int iterations,
-                                      int cutoff,
-                                      boolean printMessagesWhileTraining) {
-        GISTrainer trainer = new GISTrainer(printMessagesWhileTraining);
-	trainer.setSmoothing(SMOOTHING);
-	trainer.setSmoothingObservation(SMOOTHING_OBSERVATION);
-        return trainer.trainModel(eventStream, iterations, cutoff);
+        int iterations,
+        int cutoff,
+        boolean smoothing,boolean printMessagesWhileTraining) {
+      GISTrainer trainer = new GISTrainer(printMessagesWhileTraining);
+      trainer.setSmoothing(smoothing);
+      trainer.setSmoothingObservation(SMOOTHING_OBSERVATION);
+      return trainer.trainModel(eventStream, iterations, cutoff);
     }
     
-    public static GISModel trainModel(int iterations,
-                                        DataIndexer indexer, 
-                                        boolean printMessagesWhileTraining) {
-          GISTrainer trainer = new GISTrainer(printMessagesWhileTraining);
-          trainer.setSmoothing(SMOOTHING);
-          trainer.setSmoothingObservation(SMOOTHING_OBSERVATION);
-          return trainer.trainModel(iterations, indexer);
+    /**
+     * Train a model using the GIS algorithm.
+     * @param iterations The number of GIS iterations to perform.
+     * @param indexer The object which will be used for event compilation.
+     * @param printMessagesWhileTraining Determines whether training status messages are written to STDOUT.
+     * @param smoothing Defines whether the created trainer will use smoothing while training the model.
+     * @return The newly trained model, which can be used immediately or saved
+     *         to disk using an opennlp.maxent.io.GISModelWriter object.
+     */
+    public static GISModel trainModel(int iterations, DataIndexer indexer, boolean printMessagesWhileTraining, boolean smoothing) {
+      GISTrainer trainer = new GISTrainer(printMessagesWhileTraining);
+      trainer.setSmoothing(smoothing);
+      trainer.setSmoothingObservation(SMOOTHING_OBSERVATION);
+      return trainer.trainModel(iterations, indexer);
     }
       
     public static GISModel trainModel(int iterations, DataIndexer indexer) {
-           return trainModel(iterations,indexer,true);   
+           return trainModel(iterations,indexer,true,false);   
     }
   
 }

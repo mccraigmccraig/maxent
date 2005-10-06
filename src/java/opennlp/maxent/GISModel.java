@@ -24,12 +24,12 @@ import java.text.DecimalFormat;
  * Iterative Scaling procedure (implemented in GIS.java).
  *
  * @author      Tom Morton and Jason Baldridge
- * @version     $Revision: 1.13 $, $Date: 2004/06/11 20:51:44 $
+ * @version     $Revision: 1.14 $, $Date: 2005/10/06 11:03:47 $
  */
 public final class GISModel implements MaxentModel {
   	/** Mapping between outcomes and paramater values for each context. 
   	 * The integer representation of the context can be found using <code>pmap</code>.*/
-    private final TIntParamHashMap[] params;
+    private final Context[] params;
     /** Maping between predicates/contexts and an integer representing them. */
     private final TObjectIndexHashMap pmap;
     /** The names of the outcomes. */
@@ -44,7 +44,7 @@ public final class GISModel implements MaxentModel {
 
     private int[] numfeats;
     
-    public GISModel (TIntParamHashMap[] _params,
+    public GISModel (Context[] _params,
                      String[] predLabels,
                      String[] _ocNames,
                      int _correctionConstant,
@@ -63,6 +63,29 @@ public final class GISModel implements MaxentModel {
         iprob = Math.log(1.0/numOutcomes);
         fval = 1.0/correctionConstant;
         numfeats = new int[numOutcomes];
+    }
+    
+    /*
+    public GISModel (TIntParamHashMap[] _params,
+        String[] predLabels,
+        String[] _ocNames,
+        int _correctionConstant,
+        double _correctionParam) {
+      this(convertToContexts(_params),predLabels,_ocNames,_correctionConstant,_correctionParam);
+    }
+    */ 
+    
+    private static Context[] convertToContexts(TIntParamHashMap[] params) {
+      Context[] contexts = new Context[params.length];
+      for (int pi=0;pi<params.length;pi++) {
+        int[] activeOutcomes = params[pi].keys();
+        double[] activeParameters = new double[activeOutcomes.length];
+        for (int oi=0;oi<activeParameters.length;oi++) {
+          activeParameters[oi] = params[pi].get(activeOutcomes[oi]);
+        }
+        contexts[pi] = new Context(activeOutcomes,activeParameters);
+      }
+      return contexts;
     }
 
     /**
@@ -95,7 +118,8 @@ public final class GISModel implements MaxentModel {
      *                getOutcome(int i).
      */
     public final double[] eval(String[] context, double[] outsums) {
-        int[] activeOutcomes;
+      int[] activeOutcomes;
+      double[] activeParameters;
         for (int oid=0; oid<numOutcomes; oid++) {
             outsums[oid] = iprob;
             numfeats[oid] = 0;
@@ -103,12 +127,13 @@ public final class GISModel implements MaxentModel {
         for (int i=0; i<context.length; i++) {
             int contextIndex = pmap.get(context[i]);
             if (contextIndex >= 0) {
-                TIntParamHashMap predParams = params[contextIndex];
-                activeOutcomes = predParams.keys();
+                Context predParams = params[contextIndex];
+                activeOutcomes = predParams.getOutcomes();
+                activeParameters = predParams.getParameters();
                 for (int j=0; j<activeOutcomes.length; j++) {
 	                int oid = activeOutcomes[j];
 	                numfeats[oid]++;
-	                outsums[oid] += predParams.get(oid);
+	                outsums[oid] += activeParameters[j];
                 }
             }
         }

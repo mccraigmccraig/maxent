@@ -26,7 +26,7 @@ import gnu.trove.*;
  * and is available at <a href ="ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z"><code>ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z</code></a>. 
  *
  * @author  Jason Baldridge
- * @version $Revision: 1.15 $, $Date: 2004/06/14 20:52:41 $
+ * @version $Revision: 1.16 $, $Date: 2005/10/06 11:03:46 $
  */
 class GISTrainer {
 
@@ -50,7 +50,7 @@ class GISTrainer {
   private int numTokens; // # of event tokens
   private int numPreds; // # of predicates
   private int numOutcomes; // # of outcomes
-  /** A global index variable for Tokens. */
+  /** A global index variable for Events. */
   private int TID;
   /** A global index variable for Predicates. */
   private int PID;
@@ -82,13 +82,13 @@ class GISTrainer {
   private String[] predLabels;
 
   /** Stores the observed expected values of the features based on training data. */
-  private TIntParamHashMap[] observedExpects;
+  private MutableContext[] observedExpects;
 
   /** Stores the estimated parameter value of each predicate during iteration */
-  private TIntParamHashMap[] params;
+  private MutableContext[] params;
 
   /** Stores the expected values of the features based on the current models */
-  private TIntParamHashMap[] modelExpects;
+  private MutableContext[] modelExpects;
 
 
   /** The maximum number of feattures fired in an event. Usually refered to a C.*/
@@ -112,57 +112,7 @@ class GISTrainer {
   int[] numfeats;
   /** Initial probability for all outcomes. */
   double iprob;
-
-  /** Make all values in an TIntDoubleHashMap return to 0. */
-  private TDoubleFunction backToZeros = new TDoubleFunction() {
-    public double execute(double arg) {
-      return 0.0;
-    }
-  };
-
-  /** Updates the extected values of the features based on the modelDistribution for this event values. */
-  private TIntDoubleProcedure updateModelExpect = new TIntDoubleProcedure() {
-    public boolean execute(int oid, double arg) {
-      modelExpects[PID].put(oid, arg + (modelDistribution[oid] * numTimesEventsSeen[TID]));
-      return true;
-    }
-  };
-
-  /** Updates the params based on the newly computed model expected values. */
-  private TIntDoubleProcedure updateParams = new TIntDoubleProcedure() {
-    public boolean execute(int oid, double arg) {
-      params[PID].put(oid, arg + (Math.log(observedExpects[PID].get(oid)) - Math.log(modelExpects[PID].get(oid))));
-      return true;
-    }
-  };
-
-  private TIntDoubleProcedure updateParamsWithSmoothing = new TIntDoubleProcedure() {
-    public boolean execute(int oid, double arg) {
-      double x = 0.0;
-      double x0 = 0.0;
-      double tmp;
-      double f;
-      double fp;
-      for (int i = 0; i < 50; i++) {
-        // check what domain these parameters are in
-        tmp = modelExpects[PID].get(oid) * Math.exp(constant * x0);
-        f = tmp + (arg + x0) / sigma - observedExpects[PID].get(oid);
-        fp = tmp * constant + 1 / sigma;
-        if (fp == 0) {
-          break;
-        }
-        x = x0 - f / fp;
-        if (Math.abs(x - x0) < 0.000001) {
-          x0 = x;
-          break;
-        }
-        x0 = x;
-      }
-      params[PID].put(oid, arg + x0);
-      return true;
-    }
-  };
-
+  
   /**
    * Creates a new <code>GISTrainer</code> instance which does
    * not print progress messages about training to STDOUT.
@@ -213,11 +163,7 @@ class GISTrainer {
   /**
    * Train a model using the GIS algorithm.
    *
-   * @param eventStream The EventStream holding the data on which this model
-   *                    will be trained.
    * @param iterations  The number of GIS iterations to perform.
-   * @param cutoff      The number of times a predicate must be seen in order
-   *                    to be relevant for training.
    * @param di The data indexer used to compress events in memory.
    * @return The newly trained model, which can be used immediately or saved
    *         to disk using an opennlp.maxent.io.GISModelWriter object.
@@ -274,41 +220,48 @@ class GISTrainer {
     // the way the model's expectations are approximated in the
     // implementation, this is cancelled out when we compute the next
     // iteration of a parameter, making the extra divisions wasteful.
-    params = new TIntParamHashMap[numPreds];
-    modelExpects = new TIntParamHashMap[numPreds];
-    observedExpects = new TIntParamHashMap[numPreds];
-
-    int initialCapacity;
-    float loadFactor = (float) 0.9;
-    if (numOutcomes < 3) {
-      initialCapacity = 2;
-      loadFactor = (float) 1.0;
-    }
-    else if (numOutcomes < 5) {
-      initialCapacity = 2;
-    }
-    else {
-      initialCapacity = (int) numOutcomes / 2;
-    }
+    params = new MutableContext[numPreds];
+    modelExpects = new MutableContext[numPreds];
+    observedExpects = new MutableContext[numPreds];
+    
+    int[] activeOutcomes = new int[outcomes.length];
+    int[] outcomePattern;
+    int numActiveOutcomes = 0;
     for (PID = 0; PID < numPreds; PID++) {
-      params[PID] = new TIntParamHashMap(initialCapacity, loadFactor);
-      modelExpects[PID] = new TIntParamHashMap(initialCapacity, loadFactor);
-      observedExpects[PID] = new TIntParamHashMap(initialCapacity, loadFactor);
-      for (OID = 0; OID < numOutcomes; OID++) {
-        if (predCount[PID][OID] > 0) {
-          params[PID].put(OID, 0.0);
-          modelExpects[PID].put(OID, 0.0);
-          observedExpects[PID].put(OID, predCount[PID][OID]);
+      params[PID] = new MutableContext(outcomes,new double[outcomes.length]);
+      modelExpects[PID] = new MutableContext(outcomes,new double[outcomes.length]);
+      observedExpects[PID] = new MutableContext(outcomes,new double[outcomes.length]);
+      numActiveOutcomes = 0;
+      if (_simpleSmoothing) {
+        numActiveOutcomes = numOutcomes;
+        outcomePattern = outcomes;
+      }
+      else { //determine active outcomes
+        for (OID = 0; OID < numOutcomes; OID++) {
+          if (predCount[PID][OID] > 0) {
+            activeOutcomes[numActiveOutcomes] = OID;
+            numActiveOutcomes++;
+          }
         }
-        else if (_simpleSmoothing) {
-          params[PID].put(OID, 0.0);
-          modelExpects[PID].put(OID, 0.0);
-          observedExpects[PID].put(OID,smoothingObservation);
+        outcomePattern = new int[numActiveOutcomes];
+        for (int aoi=0;aoi<numActiveOutcomes;aoi++) {
+          outcomePattern[aoi] = activeOutcomes[aoi];
         }
       }
-      params[PID].compact();
-      modelExpects[PID].compact();
-      observedExpects[PID].compact();
+      params[PID] = new MutableContext(outcomePattern,new double[numActiveOutcomes]);
+      modelExpects[PID] = new MutableContext(outcomePattern,new double[numActiveOutcomes]);
+      observedExpects[PID] = new MutableContext(outcomePattern,new double[numActiveOutcomes]);
+      for (int aoi=0;aoi<numActiveOutcomes;aoi++) {
+        OID = activeOutcomes[aoi];
+        params[PID].setParameter(aoi, 0.0);
+        modelExpects[PID].setParameter(aoi, 0.0);
+        if (predCount[PID][OID] > 0) {
+          observedExpects[PID].setParameter(aoi, predCount[PID][OID]);
+        }
+        else if (_simpleSmoothing) { 
+          observedExpects[PID].setParameter(aoi,smoothingObservation);
+        }
+      }
     }
 
     // compute the expected value of correction
@@ -317,7 +270,7 @@ class GISTrainer {
       for (TID = 0; TID < numTokens; TID++) {
         for (int j = 0; j < contexts[TID].length; j++) {
           PID = contexts[TID][j];
-          if (!modelExpects[PID].containsKey(outcomes[TID])) {
+          if (!modelExpects[PID].contains(outcomes[TID])) {
             cfvalSum += numTimesEventsSeen[TID];
           }
         }
@@ -381,16 +334,11 @@ class GISTrainer {
   }
 
   /**
-   * Use this model to evaluate a context and return an array of the
+   * Use this model to evaluate a context and populate the specified outsums array with the
    * likelihood of each outcome given that context.
    *
    * @param context The integers of the predicates which have been
    *                observed at the present decision point.
-   * @return        The normalized probabilities for the outcomes given the
-   *                context. The indexes of the double[] are the outcome
-   *                ids, and the actual string representation of the
-   *                outcomes can be obtained from the method
-   *  	      getOutcome(int i).
    */
   public void eval(int[] context, double[] outsums) {
     for (int oid = 0; oid < numOutcomes; oid++) {
@@ -398,13 +346,15 @@ class GISTrainer {
       numfeats[oid] = 0;
     }
     int[] activeOutcomes;
+    double[] activeParameters; 
     for (int i = 0; i < context.length; i++) {
-      TIntParamHashMap predParams = params[context[i]];
-      activeOutcomes = predParams.keys();
+      Context predParams = params[context[i]];
+      activeOutcomes = predParams.getOutcomes();
+      activeParameters = predParams.getParameters();
       for (int j = 0; j < activeOutcomes.length; j++) {
         int oid = activeOutcomes[j];
         numfeats[oid]++;
-        outsums[oid] += constantInverse * predParams.get(oid);
+        outsums[oid] += constantInverse * activeParameters[j];
       }
     }
 
@@ -421,6 +371,8 @@ class GISTrainer {
       outsums[oid] /= SUM;
 
   }
+  
+  
 
   /* Compute one iteration of GIS and retutn log-likelihood.*/
   private double nextIteration() {
@@ -436,10 +388,14 @@ class GISTrainer {
       eval(contexts[TID], modelDistribution);
       for (int j = 0; j < contexts[TID].length; j++) {
         PID = contexts[TID][j];
-        modelExpects[PID].forEachEntry(updateModelExpect);
+        int[] activeOutcomes = modelExpects[PID].getOutcomes();
+        for (int aoi=0;aoi<activeOutcomes.length;aoi++) {
+          OID = activeOutcomes[aoi];
+          modelExpects[PID].updateParameter(aoi,modelDistribution[OID] * numTimesEventsSeen[TID]);
+        }
         if (_useSlackParameter) {
           for (OID = 0; OID < numOutcomes; OID++) {
-            if (!modelExpects[PID].containsKey(OID)) {
+            if (!modelExpects[PID].contains(OID)) {
               CFMOD += modelDistribution[OID] * numTimesEventsSeen[TID];
             }
           }
@@ -467,8 +423,13 @@ class GISTrainer {
 
     // compute the new parameter values
     for (PID = 0; PID < numPreds; PID++) {
-      params[PID].forEachEntry(updateParams);
-      modelExpects[PID].transformValues(backToZeros); // re-initialize to 0.0's
+      double[] observed = observedExpects[PID].getParameters();
+      double[] model = modelExpects[PID].getParameters();
+      int[] activeOutcomes = params[PID].getOutcomes();
+      for (int aoi=0;aoi<activeOutcomes.length;aoi++) {
+        params[PID].updateParameter(aoi,(Math.log(observed[aoi])) - Math.log(model[aoi]));
+        modelExpects[PID].setParameter(aoi,0.0); // re-initialize to 0.0's
+      }
     }
     if (CFMOD > 0.0 && _useSlackParameter)
       correctionParam += (cfObservedExpect - Math.log(CFMOD));
