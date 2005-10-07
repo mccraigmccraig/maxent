@@ -1,5 +1,5 @@
 This is a simple example of a use of maximum entropy and the OpenNLP
-Maxent toolkit.  (It was designed to work with Maxent v1.2.2.)  There
+Maxent toolkit.  (It was designed to work with Maxent v2.4.0.)  There
 are two example data sets provided, one for whether a game should be
 played indoors or outdoors and another for whether Arsenal or
 Manchester United (two English football clubs) will win when they play
@@ -30,7 +30,7 @@ Note: the following will avoid the need to setup you classpath in your
 environment (be sure to fix the maxent jar for the correct version
 number):
 
-> javac -classpath .:../../lib/trove.jar:../../output/maxent-2.1.1.jar *.java
+> javac -classpath .:../../lib/trove.jar:../../output/maxent-2.4.0.jar *.java
 
 Now, build the models:
 
@@ -118,6 +118,6 @@ post them to the maxent open discussion forum:
 
   https://sourceforge.net/forum/forum.php?forum_id=18384
 
-or send mail to Jason Baldridge <jmb@cogsci.ed.ac.uk>.  Posting to the
+or send mail to Tom Morton <tsmorton@users.sourceforge.net>.  Posting to the
 forum is preferable.
 

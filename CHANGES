@@ -1,3 +1,20 @@
+2.4.0
+-----
+Updated parameter datatype to re-use data structure storing which outcomes are found with that predicate/context in GISModel.  (Per suggestion by Richard Northedge).
+
+Made changes to support above change in GISTrainer, GISModelReader, GISModelWriter, and OldFormatGISModelReader.
+
+Changed smoothing boolean to be parameter instead of static variable in GIS.
+
+Update sample code to reflect above change.
+
+Improved javadoc.
+
+2.3.0
+-----
+Added and updated javadoc including package descriptions.  
+Made new trove type to improve efficiency.  
+
 2.2.0
 -----
 Added TwoPassDataIndexer to use a temorpy file for storing the events.  This
