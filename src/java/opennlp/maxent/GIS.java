@@ -22,7 +22,7 @@ package opennlp.maxent;
  * GISModels.
  *
  * @author  Jason Baldridge
- * @version $Revision: 1.5 $, $Date: 2005/10/06 11:03:47 $
+ * @version $Revision: 1.6 $, $Date: 2005/10/07 02:57:29 $
  */
 public class GIS {
     /**
@@ -48,8 +48,23 @@ public class GIS {
      *         to disk using an opennlp.maxent.io.GISModelWriter object.
      */
     public static GISModel trainModel(EventStream eventStream) {
-        return trainModel(eventStream, 100, 0, false,PRINT_MESSAGES);
+        return trainModel(eventStream, 100, 0, false, PRINT_MESSAGES);
     }
+    
+    /**
+     * Train a model using the GIS algorithm, assuming 100 iterations and no
+     * cutoff.
+     *
+     * @param eventStream The EventStream holding the data on which this model
+     *                    will be trained.
+     * @param smoothing   Defines whether the created trainer will use smoothing 
+     *                    while training the model.
+     * @return The newly trained model, which can be used immediately or saved
+     *         to disk using an opennlp.maxent.io.GISModelWriter object.
+     */
+    public static GISModel trainModel(EventStream eventStream, boolean smoothing) {
+      return trainModel(eventStream, 100, 0, smoothing,PRINT_MESSAGES);
+  }
 
     /**
      * Train a model using the GIS algorithm.
@@ -68,7 +83,7 @@ public class GIS {
         return trainModel(eventStream, iterations, cutoff, false,PRINT_MESSAGES);
     }
     
-    /**
+     /**
      * Train a model using the GIS algorithm.
      * @param eventStream The EventStream holding the data on which this model
      *                    will be trained.
