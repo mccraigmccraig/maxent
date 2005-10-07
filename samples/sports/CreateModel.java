@@ -25,7 +25,7 @@ import java.io.*;
  * from the data.
  *
  * @author  Chieu Hai Leong and Jason Baldridge
- * @version $Revision: 1.3 $, $Date: 2001/11/20 17:07:16 $
+ * @version $Revision: 1.4 $, $Date: 2005/10/07 02:58:25 $
  */
 public class CreateModel {
 
@@ -44,26 +44,25 @@ public class CreateModel {
      * java CreateModel dataFile
      */
     public static void main (String[] args) {
-	String dataFileName = new String(args[0]);
-	String modelFileName =
-	    dataFileName.substring(0,dataFileName.lastIndexOf('.'))
-	    + "Model.txt";
-	try {
-	    FileReader datafr = new FileReader(new File(dataFileName));
-	    EventStream es = 
-		new BasicEventStream(new PlainTextByLineDataStream(datafr));
-	    GIS.SMOOTHING = USE_SMOOTHING;
-	    GIS.SMOOTHING_OBSERVATION = SMOOTHING_OBSERVATION;
-	    GISModel model = GIS.trainModel(es);
-
-	    File outputFile = new File(modelFileName);
-	    GISModelWriter writer =
-		new SuffixSensitiveGISModelWriter(model, outputFile);
-	    writer.persist();
-	} catch (Exception e) {
-	    System.out.print("Unable to create model due to exception: ");
-	    System.out.println(e);
-	}
+      String dataFileName = new String(args[0]);
+      String modelFileName =
+        dataFileName.substring(0,dataFileName.lastIndexOf('.'))
+        + "Model.txt";
+      try {
+        FileReader datafr = new FileReader(new File(dataFileName));
+        EventStream es = 
+          new BasicEventStream(new PlainTextByLineDataStream(datafr));
+        GIS.SMOOTHING_OBSERVATION = SMOOTHING_OBSERVATION;
+        GISModel model = GIS.trainModel(es,true);
+        
+        File outputFile = new File(modelFileName);
+        GISModelWriter writer =
+          new SuffixSensitiveGISModelWriter(model, outputFile);
+        writer.persist();
+      } catch (Exception e) {
+        System.out.print("Unable to create model due to exception: ");
+        System.out.println(e);
+      }
     }
 
 }
