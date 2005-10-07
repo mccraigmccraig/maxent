@@ -26,7 +26,7 @@ import gnu.trove.*;
  * and is available at <a href ="ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z"><code>ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z</code></a>. 
  *
  * @author  Jason Baldridge
- * @version $Revision: 1.16 $, $Date: 2005/10/06 11:03:46 $
+ * @version $Revision: 1.17 $, $Date: 2005/10/07 02:58:02 $
  */
 class GISTrainer {
 
@@ -224,17 +224,18 @@ class GISTrainer {
     modelExpects = new MutableContext[numPreds];
     observedExpects = new MutableContext[numPreds];
     
-    int[] activeOutcomes = new int[outcomes.length];
+    int[] activeOutcomes = new int[numOutcomes];
     int[] outcomePattern;
+    int[] allOutcomesPattern= new int[numOutcomes];
+    for (OID = 0; OID < numOutcomes; OID++) {
+      allOutcomesPattern[OID] = OID;
+    }
     int numActiveOutcomes = 0;
     for (PID = 0; PID < numPreds; PID++) {
-      params[PID] = new MutableContext(outcomes,new double[outcomes.length]);
-      modelExpects[PID] = new MutableContext(outcomes,new double[outcomes.length]);
-      observedExpects[PID] = new MutableContext(outcomes,new double[outcomes.length]);
       numActiveOutcomes = 0;
       if (_simpleSmoothing) {
         numActiveOutcomes = numOutcomes;
-        outcomePattern = outcomes;
+        outcomePattern = allOutcomesPattern;
       }
       else { //determine active outcomes
         for (OID = 0; OID < numOutcomes; OID++) {
@@ -243,9 +244,14 @@ class GISTrainer {
             numActiveOutcomes++;
           }
         }
-        outcomePattern = new int[numActiveOutcomes];
-        for (int aoi=0;aoi<numActiveOutcomes;aoi++) {
-          outcomePattern[aoi] = activeOutcomes[aoi];
+        if (numActiveOutcomes == numOutcomes) {
+          outcomePattern = allOutcomesPattern;
+        }
+        else {
+          outcomePattern = new int[numActiveOutcomes];
+          for (int aoi=0;aoi<numActiveOutcomes;aoi++) {
+            outcomePattern[aoi] = activeOutcomes[aoi];
+          }
         }
       }
       params[PID] = new MutableContext(outcomePattern,new double[numActiveOutcomes]);
