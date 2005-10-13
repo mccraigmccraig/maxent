@@ -76,7 +76,7 @@ public class FileEventStream implements EventStream {
   
   /**
    * Trains and writes a model based on the events in the specified event file.
-   * the name of teh model created is based on the event file name.
+   * the name of the model created is based on the event file name.
    * @param args eventfile [iterations cuttoff]
    * @throws IOException when the eventfile can not be read or the model file can not be written.
    */
