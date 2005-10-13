@@ -1,12 +1,17 @@
 2.4.0
 -----
-Updated parameter datatype to re-use data structure storing which outcomes are found with that predicate/context in GISModel.  (Per suggestion by Richard Northedge).
+Updated parameter datatype to re-use data structure storing which outcomes
+are found with that predicate/context in GISModel.  (Per suggestion by
+Richard Northedge).
 
-Made changes to support above change in GISTrainer, GISModelReader, GISModelWriter, and OldFormatGISModelReader.
+Made changes to support above change in GISTrainer, GISModelReader,
+GISModelWriter, and OldFormatGISModelReader.
 
 Changed smoothing boolean to be parameter instead of static variable in GIS.
 
 Update sample code to reflect above change.
+
+Extracted FileEventStream from TwoPassDataIndexer.
 
 Improved javadoc.
 
