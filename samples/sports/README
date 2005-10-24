@@ -51,16 +51,16 @@ results they get on the data they were trained on:
 
 or, with command line classpath:
 
-> java -cp .:../../lib/trove.jar:../../output/classes Predict football.test
+> java -cp .:../../lib/trove.jar:../../output/classes Predict gameLocation.test
 
 You'll get output such as the following:
 
 --------------------------------------------------
-For context: Cloudy,Happy,Humid
-Outdoor[0.77126]  Indoor[0.22873]
+For context: Cloudy Happy Humid
+Outdoor[0.9255]  Indoor[0.0745]
 
-For context: Rainy,Sad,Humid
-Outdoor[0.00193]  Indoor[0.99806]
+For context: Rainy Dry
+Outdoor[0.0133]  Indoor[0.9867]
 --------------------------------------------------
 
 For the first, the model has assigned a normalized probability of 77%
@@ -73,16 +73,16 @@ because there are three possible outcomes: Arsenal wins, ManU wins, or
 they tie.  Here is some example output:
 
 --------------------------------------------------
-For context: home=man_united,Beckham=false,Scholes=true,Neville=true,Henry=false,Kanu=true,Parlour=false,Ferguson=confident,Wengler=confident,arsenal_won_previous,man_united_won_previous
-arsenal[0.29334]  man_united[0.44398]  tie[0.26267]
+For context: home=arsenal Beckham=true Henry=false
+arsenal[0.3201]  man_united[0.6343]  tie[0.0456]
 
-For context: home=arsenal,Beckham=false,Scholes=true,Neville=true,Henry=true,Kanu=true,Parlour=false,Ferguson=tense,Wengler=tense,arsenal_lost_previous,man_united_won_previous
-arsenal[0.35432]  man_united[0.24733]  tie[0.39833]
+For context: home=man_united Beckham=true Henry=true
+arsenal[0.1499]  man_united[0.2060]  tie[0.6441]
 --------------------------------------------------
 
 In the first case, ManU looks like the clear winner, but in the second
-it looks like it will be a tie, though Arsenal looks to have more of a
-chance at winning it than ManU.
+it looks like it will be a tie, though ManU looks to have more of a
+chance at winning it than Arsenal.
 
 (For those who don't know, Beckham, Scholes, and Neville or ManU
 players and Ferguson is the coach, while Henry, Kanu, and Parlour are
