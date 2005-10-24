@@ -26,7 +26,7 @@ import gnu.trove.*;
  * and is available at <a href ="ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z"><code>ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z</code></a>. 
  *
  * @author  Jason Baldridge
- * @version $Revision: 1.17 $, $Date: 2005/10/07 02:58:02 $
+ * @version $Revision: 1.18 $, $Date: 2005/10/24 12:29:01 $
  */
 class GISTrainer {
 
@@ -258,7 +258,7 @@ class GISTrainer {
       modelExpects[PID] = new MutableContext(outcomePattern,new double[numActiveOutcomes]);
       observedExpects[PID] = new MutableContext(outcomePattern,new double[numActiveOutcomes]);
       for (int aoi=0;aoi<numActiveOutcomes;aoi++) {
-        OID = activeOutcomes[aoi];
+        OID = outcomePattern[aoi];
         params[PID].setParameter(aoi, 0.0);
         modelExpects[PID].setParameter(aoi, 0.0);
         if (predCount[PID][OID] > 0) {
