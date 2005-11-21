@@ -17,18 +17,16 @@
 //////////////////////////////////////////////////////////////////////////////   
 package opennlp.maxent;
 
-import java.io.BufferedReader;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TObjectIntHashMap;
+
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.StringTokenizer;
-
-import gnu.trove.*;
 
 /**
  * Collecting event and context counts by making two passes over the events.  The
