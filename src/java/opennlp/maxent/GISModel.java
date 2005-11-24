@@ -17,14 +17,18 @@
 //////////////////////////////////////////////////////////////////////////////   
 package opennlp.maxent;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStreamReader;
 import java.text.DecimalFormat;
+
 
 /**
  * A maximum entropy model which has been trained using the Generalized
  * Iterative Scaling procedure (implemented in GIS.java).
  *
  * @author      Tom Morton and Jason Baldridge
- * @version     $Revision: 1.14 $, $Date: 2005/10/06 11:03:47 $
+ * @version     $Revision: 1.15 $, $Date: 2005/11/24 02:39:07 $
  */
 public final class GISModel implements MaxentModel {
   	/** Mapping between outcomes and paramater values for each context. 
@@ -258,5 +262,23 @@ public final class GISModel implements MaxentModel {
         data[3] = new Integer((int)correctionConstant);
         data[4] = new Double(correctionParam);
         return data;
+    }
+    
+    public static void main(String[] args) throws java.io.IOException {
+      if (args.length == 0) {
+        System.err.println("Usage: GISModel modelname < contexts");
+        System.exit(1);
+      }
+      GISModel m = new opennlp.maxent.io.SuffixSensitiveGISModelReader(new File(args[0])).getModel();
+      BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+      DecimalFormat df = new java.text.DecimalFormat(".###");
+      for (String line = in.readLine(); line != null; line = in.readLine()) {
+        String[] context = line.split(" ");
+        double[] dist = m.eval(context);
+        for (int oi=0;oi<dist.length;oi++) {
+          System.out.print("["+m.getOutcome(oi)+" "+df.format(dist[oi])+"] ");
+        }
+        System.out.println();
+      }
     }
 }
