@@ -1,5 +1,5 @@
 /////////////////////////////////////////////////////////////////////////////
-// Copyright (C) 2001 Jason Baldridge and Gann Bierner
+// Copyright (C) 2001 Jason Baldridge and Gann Bierner and Tom Morton
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -17,7 +17,6 @@
 //////////////////////////////////////////////////////////////////////////////   
 package opennlp.maxent;
 
-import gnu.trove.*;
 
 /**
  * An implementation of Generalized Iterative Scaling.  The reference paper
@@ -25,8 +24,14 @@ import gnu.trove.*;
  * University of Pennsylvania's Institute for Research in Cognitive Science,
  * and is available at <a href ="ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z"><code>ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z</code></a>. 
  *
+ * The slack parameter used in the above implementation has been removed by default
+ * from the computation per Investigating GIS and Smoothing for Maximum Entropy Taggers, Clark and Curran (2002).  
+ * <a href="http://acl.ldc.upenn.edu/E/E03/E03-1071.pdf"><code>http://acl.ldc.upenn.edu/E/E03/E03-1071.pdf</code></a>
+ * The slack parameter can be used by setting _useSlackParameter to true.
+ * 
  * @author  Jason Baldridge
- * @version $Revision: 1.18 $, $Date: 2005/10/24 12:29:01 $
+ * @author Tom Morton
+ * @version $Revision: 1.19 $, $Date: 2005/11/24 02:39:47 $
  */
 class GISTrainer {
 
@@ -366,9 +371,11 @@ class GISTrainer {
 
     double SUM = 0.0;
     for (int oid = 0; oid < numOutcomes; oid++) {
-      outsums[oid] = Math.exp(outsums[oid]);
       if (_useSlackParameter) {
-        outsums[oid] += ((1.0 - ((double) numfeats[oid] / constant)) * correctionParam);
+        outsums[oid] = Math.exp(outsums[oid]+((1.0 - ((double) numfeats[oid] / constant)) * correctionParam));
+      }
+      else {
+        outsums[oid] = Math.exp(outsums[oid]);
       }
       SUM += outsums[oid];
     }
