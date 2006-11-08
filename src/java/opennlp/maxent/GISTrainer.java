@@ -31,7 +31,7 @@ package opennlp.maxent;
  * 
  * @author  Jason Baldridge
  * @author Tom Morton
- * @version $Revision: 1.19 $, $Date: 2005/11/24 02:39:47 $
+ * @version $Revision: 1.20 $, $Date: 2006/11/08 22:03:43 $
  */
 class GISTrainer {
 
@@ -97,11 +97,11 @@ class GISTrainer {
 
 
   /** The maximum number of feattures fired in an event. Usually refered to a C.*/
-  private int constant;
+  //private int constant;
   /**  Stores inverse of constant, 1/C. */
-  private double constantInverse;
+  //private double constantInverse;
   /** The correction parameter of the model. */
-  private double correctionParam;
+  //private double correctionParam;
   /** Observed expectation of correction feature. */
   private double cfObservedExpect;
   /** A global variable for the models expected value of the correction feature. */
@@ -118,6 +118,7 @@ class GISTrainer {
   /** Initial probability for all outcomes. */
   double iprob;
   
+  EvalParameters evalParams;
   /**
    * Creates a new <code>GISTrainer</code> instance which does
    * not print progress messages about training to STDOUT.
@@ -184,14 +185,12 @@ class GISTrainer {
     //printTable(contexts);
 
     // determine the correction constant and its inverse
-    constant = contexts[0].length;
+    int correctionConstant = contexts[0].length;
     for (TID = 1; TID < contexts.length; TID++) {
-      if (contexts[TID].length > constant) {
-        constant = contexts[TID].length;
+      if (contexts[TID].length > correctionConstant) {
+        correctionConstant = contexts[TID].length;
       }
     }
-    constantInverse = 1.0 / constant;
-
     display("done.\n");
 
     outcomeLabels = di.getOutcomeLabels();
@@ -228,7 +227,7 @@ class GISTrainer {
     params = new MutableContext[numPreds];
     modelExpects = new MutableContext[numPreds];
     observedExpects = new MutableContext[numPreds];
-    
+    evalParams = new EvalParameters(params,0,correctionConstant,numOutcomes);
     int[] activeOutcomes = new int[numOutcomes];
     int[] outcomePattern;
     int[] allOutcomesPattern= new int[numOutcomes];
@@ -285,7 +284,7 @@ class GISTrainer {
             cfvalSum += numTimesEventsSeen[TID];
           }
         }
-        cfvalSum += (constant - contexts[TID].length) * numTimesEventsSeen[TID];
+        cfvalSum += (correctionConstant - contexts[TID].length) * numTimesEventsSeen[TID];
       }
       if (cfvalSum == 0) {
         cfObservedExpect = Math.log(NEAR_ZERO); //nearly zero so log is defined
@@ -293,8 +292,6 @@ class GISTrainer {
       else {
         cfObservedExpect = Math.log(cfvalSum);
       }
-
-      correctionParam = 0.0;
     }
     predCount = null; // don't need it anymore
 
@@ -308,7 +305,7 @@ class GISTrainer {
     findParameters(iterations);
 
     /*************** Create and return the model ******************/
-    return new GISModel(params, predLabels, outcomeLabels, constant, correctionParam);
+    return new GISModel(params, predLabels, outcomeLabels, correctionConstant, evalParams.correctionParam);
 
   }
 
@@ -342,50 +339,7 @@ class GISTrainer {
     modelExpects = null;
     numTimesEventsSeen = null;
     contexts = null;
-  }
-
-  /**
-   * Use this model to evaluate a context and populate the specified outsums array with the
-   * likelihood of each outcome given that context.
-   *
-   * @param context The integers of the predicates which have been
-   *                observed at the present decision point.
-   */
-  public void eval(int[] context, double[] outsums) {
-    for (int oid = 0; oid < numOutcomes; oid++) {
-      outsums[oid] = iprob;
-      numfeats[oid] = 0;
-    }
-    int[] activeOutcomes;
-    double[] activeParameters; 
-    for (int i = 0; i < context.length; i++) {
-      Context predParams = params[context[i]];
-      activeOutcomes = predParams.getOutcomes();
-      activeParameters = predParams.getParameters();
-      for (int j = 0; j < activeOutcomes.length; j++) {
-        int oid = activeOutcomes[j];
-        numfeats[oid]++;
-        outsums[oid] += constantInverse * activeParameters[j];
-      }
-    }
-
-    double SUM = 0.0;
-    for (int oid = 0; oid < numOutcomes; oid++) {
-      if (_useSlackParameter) {
-        outsums[oid] = Math.exp(outsums[oid]+((1.0 - ((double) numfeats[oid] / constant)) * correctionParam));
-      }
-      else {
-        outsums[oid] = Math.exp(outsums[oid]);
-      }
-      SUM += outsums[oid];
-    }
-
-    for (int oid = 0; oid < numOutcomes; oid++)
-      outsums[oid] /= SUM;
-
-  }
-  
-  
+  }  
 
   /* Compute one iteration of GIS and retutn log-likelihood.*/
   private double nextIteration() {
@@ -398,7 +352,7 @@ class GISTrainer {
     for (TID = 0; TID < numTokens; TID++) {
       // TID, modeldistribution and PID are globals used in 
       // the updateModelExpects procedure.  They need to be set.
-      eval(contexts[TID], modelDistribution);
+      GISModel.eval(contexts[TID], modelDistribution, evalParams);
       for (int j = 0; j < contexts[TID].length; j++) {
         PID = contexts[TID][j];
         int[] activeOutcomes = modelExpects[PID].getOutcomes();
@@ -415,7 +369,7 @@ class GISTrainer {
         }
       }
       if (_useSlackParameter)
-        CFMOD += (constant - contexts[TID].length) * numTimesEventsSeen[TID];
+        CFMOD += (evalParams.correctionConstant - contexts[TID].length) * numTimesEventsSeen[TID];
 
       loglikelihood += Math.log(modelDistribution[outcomes[TID]]) * numTimesEventsSeen[TID];
       numEvents += numTimesEventsSeen[TID];
@@ -445,7 +399,7 @@ class GISTrainer {
       }
     }
     if (CFMOD > 0.0 && _useSlackParameter)
-      correctionParam += (cfObservedExpect - Math.log(CFMOD));
+        evalParams.correctionParam += (cfObservedExpect - Math.log(CFMOD));
 
     display(". loglikelihood=" + loglikelihood + "\t" + ((double) numCorrect / numEvents) + "\n");
     return (loglikelihood);
