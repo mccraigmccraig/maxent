@@ -28,7 +28,7 @@ import java.util.*;
  * extending class to define precisely how the data should be stored.
  *
  * @author      Jason Baldridge
- * @version     $Revision: 1.6 $, $Date: 2005/10/06 11:04:16 $
+ * @version     $Revision: 1.7 $, $Date: 2006/11/09 20:58:19 $
  */
 public abstract class GISModelWriter {
     protected Context[] PARAMS;
@@ -70,49 +70,48 @@ public abstract class GISModelWriter {
      * addition to implementing the <code>writeX()</code> methods.
      */
     public void persist() throws IOException {
-
-	// the type of model (GIS)
-	writeUTF("GIS");
-
-	// the value of the correction constant
-	writeInt(CORRECTION_CONSTANT);
-
-	// the value of the correction constant	
-	writeDouble(CORRECTION_PARAM);
-
-	// the mapping from outcomes to their integer indexes
-	writeInt(OUTCOME_LABELS.length);
-
-	for (int i=0; i<OUTCOME_LABELS.length; i++)
-	    writeUTF(OUTCOME_LABELS[i]); 
-
-	// the mapping from predicates to the outcomes they contributed to.
-	// The sorting is done so that we actually can write this out more
-	// compactly than as the entire list.
-	ComparablePredicate[] sorted = sortValues();
-	List compressed = compressOutcomes(sorted);
-	
-	writeInt(compressed.size());
-
-	for (int i=0; i<compressed.size(); i++) {
-	    List a = (List)compressed.get(i);
-	    writeUTF(a.size()
-		     + ((ComparablePredicate)a.get(0)).toString());
-	}	
-	
-	// the mapping from predicate names to their integer indexes
-	writeInt(PARAMS.length);
-	
-	String pred;
-	for (int i=0; i<sorted.length; i++)
-	    writeUTF(sorted[i].name); 
-
-	// write out the parameters
-	for (int i=0; i<sorted.length; i++)
-	    for (int j=0; j<sorted[i].params.length; j++)
-		writeDouble(sorted[i].params[j]);
-
-	close();
+      
+      // the type of model (GIS)
+      writeUTF("GIS");
+      
+      // the value of the correction constant
+      writeInt(CORRECTION_CONSTANT);
+      
+      // the value of the correction constant	
+      writeDouble(CORRECTION_PARAM);
+      
+      // the mapping from outcomes to their integer indexes
+      writeInt(OUTCOME_LABELS.length);
+      
+      for (int i=0; i<OUTCOME_LABELS.length; i++)
+        writeUTF(OUTCOME_LABELS[i]); 
+      
+      // the mapping from predicates to the outcomes they contributed to.
+      // The sorting is done so that we actually can write this out more
+      // compactly than as the entire list.
+      ComparablePredicate[] sorted = sortValues();
+      List compressed = compressOutcomes(sorted);
+      
+      writeInt(compressed.size());
+      
+      for (int i=0; i<compressed.size(); i++) {
+        List a = (List)compressed.get(i);
+        writeUTF(a.size()
+            + ((ComparablePredicate)a.get(0)).toString());
+      }	
+      
+      // the mapping from predicate names to their integer indexes
+      writeInt(PARAMS.length);
+      
+      for (int i=0; i<sorted.length; i++)
+        writeUTF(sorted[i].name); 
+      
+      // write out the parameters
+      for (int i=0; i<sorted.length; i++)
+        for (int j=0; j<sorted[i].params.length; j++)
+          writeDouble(sorted[i].params[j]);
+      
+      close();
     }
 
 
@@ -151,23 +150,21 @@ public abstract class GISModelWriter {
     }
     
     protected List compressOutcomes (ComparablePredicate[] sorted) {
-
-	ComparablePredicate cp = sorted[0];
-	List outcomePatterns = new ArrayList();
-	List newGroup = new ArrayList();
-	for (int i=0; i<sorted.length; i++) {
-	    if (cp.compareTo(sorted[i]) == 0) {
-		newGroup.add(sorted[i]);
-	    } else {	    
-		cp = sorted[i];
-		outcomePatterns.add(newGroup);
-		newGroup = new ArrayList();
-		newGroup.add(sorted[i]);
-	    }	    
-	}
-	outcomePatterns.add(newGroup);
-
-	return outcomePatterns;
+      ComparablePredicate cp = sorted[0];
+      List outcomePatterns = new ArrayList();
+      List newGroup = new ArrayList();
+      for (int i=0; i<sorted.length; i++) {
+        if (cp.compareTo(sorted[i]) == 0) {
+          newGroup.add(sorted[i]);
+        } else {	    
+          cp = sorted[i];
+          outcomePatterns.add(newGroup);
+          newGroup = new ArrayList();
+          newGroup.add(sorted[i]);
+        }	    
+      }
+      outcomePatterns.add(newGroup);
+      return outcomePatterns;
     }
 
     
