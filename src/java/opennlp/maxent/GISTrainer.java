@@ -1,5 +1,5 @@
 /////////////////////////////////////////////////////////////////////////////
-// Copyright (C) 2001 Jason Baldridge and Gann Bierner and Tom Morton
+// Copyright (C) 2001 Jason Baldridge, Gann Bierner, and Tom Morton
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -25,24 +25,34 @@ package opennlp.maxent;
  * and is available at <a href ="ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z"><code>ftp://ftp.cis.upenn.edu/pub/ircs/tr/97-08.ps.Z</code></a>. 
  *
  * The slack parameter used in the above implementation has been removed by default
- * from the computation per Investigating GIS and Smoothing for Maximum Entropy Taggers, Clark and Curran (2002).  
+ * from the computation and a method for updating with Gaussian smoothing has been
+ * added per Investigating GIS and Smoothing for Maximum Entropy Taggers, Clark and Curran (2002).  
  * <a href="http://acl.ldc.upenn.edu/E/E03/E03-1071.pdf"><code>http://acl.ldc.upenn.edu/E/E03/E03-1071.pdf</code></a>
- * The slack parameter can be used by setting _useSlackParameter to true.
+ * The slack parameter can be used by setting <code>useSlackParameter</code> to true.
+ * Gaussian smoothing can be used by setting <code>useGaussianSmoothing</code> to true. 
  * 
- * @author  Jason Baldridge
+ * A prior can be used to train models which converge to the distribution which minimizes the
+ * relative entropy between the distribution specified by the emperical constraints of the training
+ * data and the specified prior.  By default, the uniform distribution is used as the prior.
+ *    
  * @author Tom Morton
- * @version $Revision: 1.20 $, $Date: 2006/11/08 22:03:43 $
+ * @author  Jason Baldridge
+ * @version $Revision: 1.21 $, $Date: 2006/11/09 20:55:23 $
  */
 class GISTrainer {
 
-  // This can improve model accuracy, though training will potentially take
-  // longer and use more memory.  Model size will also be larger.  Initial
-  // testing indicates improvements for models built on small data sets and
-  // few outcomes, but performance degradation for those with large data
-  // sets and lots of outcomes.
-  private boolean _simpleSmoothing = false;
-
-  private boolean _useSlackParameter = false;
+  /**
+   * Specifies whether unseen context/outcome pairs should be estimated as occur very infrequently.
+   */
+  private boolean useSimpleSmoothing = false;
+  /**
+   * Specifies whether a slack parameter should be used in the model.
+   */
+  private boolean useSlackParameter = false;
+  /** Specified whether parameter updates should prefer a distribution of parameters which
+   * is gaussian.
+   */
+  private boolean useGaussianSmoothing = false;
   private double sigma = 2.0;
 
   // If we are using smoothing, this is used as the "number" of
@@ -52,26 +62,22 @@ class GISTrainer {
 
   private boolean printMessages = false;
 
-  private int numTokens; // # of event tokens
-  private int numPreds; // # of predicates
-  private int numOutcomes; // # of outcomes
-  /** A global index variable for Events. */
-  private int TID;
-  /** A global index variable for Predicates. */
-  private int PID;
-  /** A global index variable for Outcomes. */
-  private int OID;
+  /** Number of event tokens. */
+  private int numTokens; 
+  /** Number of predicates. */
+  private int numPreds; 
+  /** Number of outcomes. */
+  private int numOutcomes; 
 
   /** Records the array of predicates seen in each event. */
   private int[][] contexts;
 
   /** Records the array of outcomes seen in each event. */
   private int[] outcomes;
-
+  /** List of outcomes for each event i, in context[i]. */
   private int[] outcomeList;
 
-  // records the num of times an event has been seen, paired to
-  // int[][] contexts
+  /** Records the num of times an event has been seen for each event i, in context[i]. */
   private int[] numTimesEventsSeen;
 
   /** Stores the String names of the outcomes.  The GIS only tracks outcomes
@@ -94,14 +100,11 @@ class GISTrainer {
 
   /** Stores the expected values of the features based on the current models */
   private MutableContext[] modelExpects;
+  
+  /** This is the prior distribution that the model uses for training. */
+  private Prior prior;
 
 
-  /** The maximum number of feattures fired in an event. Usually refered to a C.*/
-  //private int constant;
-  /**  Stores inverse of constant, 1/C. */
-  //private double constantInverse;
-  /** The correction parameter of the model. */
-  //private double correctionParam;
   /** Observed expectation of correction feature. */
   private double cfObservedExpect;
   /** A global variable for the models expected value of the correction feature. */
@@ -147,7 +150,7 @@ class GISTrainer {
    * @param smooth true if smoothing is desired, false if not
    */
   public void setSmoothing(boolean smooth) {
-    _simpleSmoothing = smooth;
+    useSimpleSmoothing = smooth;
   }
 
   /**
@@ -161,11 +164,20 @@ class GISTrainer {
   public void setSmoothingObservation(double timesSeen) {
     _smoothingObservation = timesSeen;
   }
+  
 
+  /**
+   * Trains a GIS model on the event in the specified event stream, using the specified number
+   * of iterations and the specified count cutoff.
+   * @param eventStream A stream of all events.
+   * @param iterations The number of iterations to use for GIS.
+   * @param cutoff The number of times a feature must occur to be included.
+   * @return A GIS model trained with specified 
+   */
   public GISModel trainModel(EventStream eventStream, int iterations, int cutoff) {
-    return trainModel(iterations, new OnePassDataIndexer(eventStream, cutoff));
+    return trainModel(iterations, new OnePassDataIndexer(eventStream,cutoff));
   }
-
+  
   /**
    * Train a model using the GIS algorithm.
    *
@@ -175,20 +187,33 @@ class GISTrainer {
    *         to disk using an opennlp.maxent.io.GISModelWriter object.
    */
   public GISModel trainModel(int iterations, DataIndexer di) {
+    return trainModel(iterations,di,new UniformPrior(di.getOutcomeList().length));
+  }
+
+  /**
+   * Train a model using the GIS algorithm.
+   *
+   * @param iterations  The number of GIS iterations to perform.
+   * @param di The data indexer used to compress events in memory.
+   * @param modelPrior The prior distribution used to train this model.
+   * @return The newly trained model, which can be used immediately or saved
+   *         to disk using an opennlp.maxent.io.GISModelWriter object.
+   */
+  public GISModel trainModel(int iterations, DataIndexer di, Prior modelPrior) {
     /************** Incorporate all of the needed info ******************/
     display("Incorporating indexed data for training...  \n");
     contexts = di.getContexts();
     outcomes = di.getOutcomeList();
     numTimesEventsSeen = di.getNumTimesEventsSeen();
     numTokens = contexts.length;
-
+    this.prior = modelPrior;
     //printTable(contexts);
 
     // determine the correction constant and its inverse
     int correctionConstant = contexts[0].length;
-    for (TID = 1; TID < contexts.length; TID++) {
-      if (contexts[TID].length > correctionConstant) {
-        correctionConstant = contexts[TID].length;
+    for (int ci = 1; ci < contexts.length; ci++) {
+      if (contexts[ci].length > correctionConstant) {
+        correctionConstant = contexts[ci].length;
       }
     }
     display("done.\n");
@@ -207,9 +232,9 @@ class GISTrainer {
 
     // set up feature arrays
     int[][] predCount = new int[numPreds][numOutcomes];
-    for (TID = 0; TID < numTokens; TID++)
-      for (int j = 0; j < contexts[TID].length; j++)
-        predCount[contexts[TID][j]][outcomeList[TID]] += numTimesEventsSeen[TID];
+    for (int ti = 0; ti < numTokens; ti++)
+      for (int j = 0; j < contexts[ti].length; j++)
+        predCount[contexts[ti][j]][outcomeList[ti]] += numTimesEventsSeen[ti];
 
     //printTable(predCount);
     di = null; // don't need it anymore
@@ -231,20 +256,20 @@ class GISTrainer {
     int[] activeOutcomes = new int[numOutcomes];
     int[] outcomePattern;
     int[] allOutcomesPattern= new int[numOutcomes];
-    for (OID = 0; OID < numOutcomes; OID++) {
-      allOutcomesPattern[OID] = OID;
+    for (int oi = 0; oi < numOutcomes; oi++) {
+      allOutcomesPattern[oi] = oi;
     }
     int numActiveOutcomes = 0;
-    for (PID = 0; PID < numPreds; PID++) {
+    for (int pi = 0; pi < numPreds; pi++) {
       numActiveOutcomes = 0;
-      if (_simpleSmoothing) {
+      if (useSimpleSmoothing) {
         numActiveOutcomes = numOutcomes;
         outcomePattern = allOutcomesPattern;
       }
       else { //determine active outcomes
-        for (OID = 0; OID < numOutcomes; OID++) {
-          if (predCount[PID][OID] > 0) {
-            activeOutcomes[numActiveOutcomes] = OID;
+        for (int oi = 0; oi < numOutcomes; oi++) {
+          if (predCount[pi][oi] > 0) {
+            activeOutcomes[numActiveOutcomes] = oi;
             numActiveOutcomes++;
           }
         }
@@ -258,33 +283,33 @@ class GISTrainer {
           }
         }
       }
-      params[PID] = new MutableContext(outcomePattern,new double[numActiveOutcomes]);
-      modelExpects[PID] = new MutableContext(outcomePattern,new double[numActiveOutcomes]);
-      observedExpects[PID] = new MutableContext(outcomePattern,new double[numActiveOutcomes]);
+      params[pi] = new MutableContext(outcomePattern,new double[numActiveOutcomes]);
+      modelExpects[pi] = new MutableContext(outcomePattern,new double[numActiveOutcomes]);
+      observedExpects[pi] = new MutableContext(outcomePattern,new double[numActiveOutcomes]);
       for (int aoi=0;aoi<numActiveOutcomes;aoi++) {
-        OID = outcomePattern[aoi];
-        params[PID].setParameter(aoi, 0.0);
-        modelExpects[PID].setParameter(aoi, 0.0);
-        if (predCount[PID][OID] > 0) {
-          observedExpects[PID].setParameter(aoi, predCount[PID][OID]);
+        int oi = outcomePattern[aoi];
+        params[pi].setParameter(aoi, 0.0);
+        modelExpects[pi].setParameter(aoi, 0.0);
+        if (predCount[pi][oi] > 0) {
+          observedExpects[pi].setParameter(aoi, predCount[pi][oi]);
         }
-        else if (_simpleSmoothing) { 
-          observedExpects[PID].setParameter(aoi,smoothingObservation);
+        else if (useSimpleSmoothing) { 
+          observedExpects[pi].setParameter(aoi,smoothingObservation);
         }
       }
     }
 
     // compute the expected value of correction
-    if (_useSlackParameter) {
+    if (useSlackParameter) {
       int cfvalSum = 0;
-      for (TID = 0; TID < numTokens; TID++) {
-        for (int j = 0; j < contexts[TID].length; j++) {
-          PID = contexts[TID][j];
-          if (!modelExpects[PID].contains(outcomes[TID])) {
-            cfvalSum += numTimesEventsSeen[TID];
+      for (int ti = 0; ti < numTokens; ti++) {
+        for (int j = 0; j < contexts[ti].length; j++) {
+          int pi = contexts[ti][j];
+          if (!modelExpects[pi].contains(outcomes[ti])) {
+            cfvalSum += numTimesEventsSeen[ti];
           }
         }
-        cfvalSum += (correctionConstant - contexts[TID].length) * numTimesEventsSeen[TID];
+        cfvalSum += (correctionConstant - contexts[ti].length) * numTimesEventsSeen[ti];
       }
       if (cfvalSum == 0) {
         cfObservedExpect = Math.log(NEAR_ZERO); //nearly zero so log is defined
@@ -339,8 +364,35 @@ class GISTrainer {
     modelExpects = null;
     numTimesEventsSeen = null;
     contexts = null;
-  }  
-
+  }
+  
+  //modeled on implementation in  Zhang Le's maxent kit
+  private double gaussianUpdate(int predicate, int oid, int n, double correctionConstant) {
+    double param = params[predicate].getParameters()[oid];
+    double x = 0.0;
+    double x0 = 0.0;
+    double f;
+    double tmp;
+    double fp;
+    double modelValue = modelExpects[predicate].getParameters()[oid];
+    double observedValue = observedExpects[predicate].getParameters()[oid];
+    for (int i = 0; i < 50; i++) {
+      tmp = modelValue * Math.exp(correctionConstant * x0);
+      f = tmp + (param + x0) / sigma - observedValue;
+      fp = tmp * correctionConstant + 1 / sigma;
+      if (fp == 0) {
+        break;
+      }
+      x = x0 - f / fp;
+      if (Math.abs(x - x0) < 0.000001) {
+        x0 = x;
+        break;
+      }
+      x0 = x;
+    }
+    return x0;
+  }
+  
   /* Compute one iteration of GIS and retutn log-likelihood.*/
   private double nextIteration() {
     // compute contribution of p(a|b_i) for each feature and the new
@@ -349,35 +401,34 @@ class GISTrainer {
     CFMOD = 0.0;
     int numEvents = 0;
     int numCorrect = 0;
-    for (TID = 0; TID < numTokens; TID++) {
-      // TID, modeldistribution and PID are globals used in 
-      // the updateModelExpects procedure.  They need to be set.
+    for (int TID = 0; TID < numTokens; TID++) {
+      prior.logPrior(modelDistribution,contexts[TID]);
       GISModel.eval(contexts[TID], modelDistribution, evalParams);
       for (int j = 0; j < contexts[TID].length; j++) {
-        PID = contexts[TID][j];
-        int[] activeOutcomes = modelExpects[PID].getOutcomes();
+        int pi = contexts[TID][j];
+        int[] activeOutcomes = modelExpects[pi].getOutcomes();
         for (int aoi=0;aoi<activeOutcomes.length;aoi++) {
-          OID = activeOutcomes[aoi];
-          modelExpects[PID].updateParameter(aoi,modelDistribution[OID] * numTimesEventsSeen[TID]);
+          int oi = activeOutcomes[aoi];
+          modelExpects[pi].updateParameter(aoi,modelDistribution[oi] * numTimesEventsSeen[TID]);
         }
-        if (_useSlackParameter) {
-          for (OID = 0; OID < numOutcomes; OID++) {
-            if (!modelExpects[PID].contains(OID)) {
-              CFMOD += modelDistribution[OID] * numTimesEventsSeen[TID];
+        if (useSlackParameter) {
+          for (int oi = 0; oi < numOutcomes; oi++) {
+            if (!modelExpects[pi].contains(oi)) {
+              CFMOD += modelDistribution[oi] * numTimesEventsSeen[TID];
             }
           }
         }
       }
-      if (_useSlackParameter)
+      if (useSlackParameter)
         CFMOD += (evalParams.correctionConstant - contexts[TID].length) * numTimesEventsSeen[TID];
 
       loglikelihood += Math.log(modelDistribution[outcomes[TID]]) * numTimesEventsSeen[TID];
       numEvents += numTimesEventsSeen[TID];
       if (printMessages) {
         int max = 0;
-        for (OID = 1; OID < numOutcomes; OID++) {
-          if (modelDistribution[OID] > modelDistribution[max]) {
-            max = OID;
+        for (int oi = 1; oi < numOutcomes; oi++) {
+          if (modelDistribution[oi] > modelDistribution[max]) {
+            max = oi;
           }
         }
         if (max == outcomes[TID]) {
@@ -389,16 +440,21 @@ class GISTrainer {
     display(".");
 
     // compute the new parameter values
-    for (PID = 0; PID < numPreds; PID++) {
-      double[] observed = observedExpects[PID].getParameters();
-      double[] model = modelExpects[PID].getParameters();
-      int[] activeOutcomes = params[PID].getOutcomes();
+    for (int pi = 0; pi < numPreds; pi++) {
+      double[] observed = observedExpects[pi].getParameters();
+      double[] model = modelExpects[pi].getParameters();
+      int[] activeOutcomes = params[pi].getOutcomes();
       for (int aoi=0;aoi<activeOutcomes.length;aoi++) {
-        params[PID].updateParameter(aoi,(Math.log(observed[aoi])) - Math.log(model[aoi]));
-        modelExpects[PID].setParameter(aoi,0.0); // re-initialize to 0.0's
+        if (useGaussianSmoothing) {
+          params[pi].updateParameter(aoi,gaussianUpdate(pi,aoi,numEvents,evalParams.correctionConstant));
+        }
+        else {
+          params[pi].updateParameter(aoi,((Math.log(observed[aoi])) - Math.log(model[aoi])));
+        }
+        modelExpects[pi].setParameter(aoi,0.0); // re-initialize to 0.0's
       }
     }
-    if (CFMOD > 0.0 && _useSlackParameter)
+    if (CFMOD > 0.0 && useSlackParameter)
         evalParams.correctionParam += (cfObservedExpect - Math.log(CFMOD));
 
     display(". loglikelihood=" + loglikelihood + "\t" + ((double) numCorrect / numEvents) + "\n");
