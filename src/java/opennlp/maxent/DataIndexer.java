@@ -34,8 +34,8 @@ public interface DataIndexer {
   public int[] getNumTimesEventsSeen();
   
   /**
-   * Returns an array indicating the number of outcomes found with a particular event.
-   * @return an array indexed by event index  indicating the number of outcomes found with a particular event.
+   * Returns an array indicating the outcome index for each event.
+   * @return an array indicating the outcome index for each event.
    */
   public int[] getOutcomeList();
   
