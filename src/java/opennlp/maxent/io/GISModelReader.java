@@ -21,13 +21,12 @@ import java.util.StringTokenizer;
 
 import opennlp.maxent.Context;
 import opennlp.maxent.GISModel;
-import opennlp.maxent.TIntParamHashMap;
 
 /**
  * Abstract parent class for readers of GISModels.
  *
  * @author      Jason Baldridge
- * @version     $Revision: 1.6 $, $Date: 2005/10/06 11:04:16 $
+ * @version     $Revision: 1.7 $, $Date: 2006/11/09 20:57:04 $
  */
 public abstract class GISModelReader {
     /**
