@@ -47,6 +47,12 @@ public interface DataIndexer {
   public String[] getPredLabels();
   
   /**
+   * Returns an array of the count of each predicate in the events.
+   * @return an array of the count of each predicate in the events.
+   */
+  public int[] getPredCounts();
+  
+  /**
     * Returns an array of outcome names.
     * @return an array of outcome names indexed by outcome index.
     */
