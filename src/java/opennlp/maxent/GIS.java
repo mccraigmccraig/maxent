@@ -22,7 +22,7 @@ package opennlp.maxent;
  * GISModels.
  *
  * @author  Jason Baldridge
- * @version $Revision: 1.7 $, $Date: 2005/10/13 18:21:15 $
+ * @version $Revision: 1.8 $, $Date: 2006/11/15 21:42:04 $
  */
 public class GIS {
     /**
@@ -115,25 +115,9 @@ public class GIS {
      *         to disk using an opennlp.maxent.io.GISModelWriter object.
      */
     public static GISModel trainModel(int iterations, DataIndexer indexer, boolean smoothing) {
-      return trainModel(iterations,indexer,false,smoothing);
+      return trainModel(iterations,indexer,false,smoothing,null,0);
     }
     
-    /**
-     * Train a model using the GIS algorithm.
-     * @param iterations The number of GIS iterations to perform.
-     * @param indexer The object which will be used for event compilation.
-     * @param printMessagesWhileTraining Determines whether training status messages are written to STDOUT.
-     * @param smoothing Defines whether the created trainer will use smoothing while training the model.
-     * @return The newly trained model, which can be used immediately or saved
-     *         to disk using an opennlp.maxent.io.GISModelWriter object.
-     */
-    public static GISModel trainModel(int iterations, DataIndexer indexer, boolean printMessagesWhileTraining, boolean smoothing) {
-      GISTrainer trainer = new GISTrainer(printMessagesWhileTraining);
-      trainer.setSmoothing(smoothing);
-      trainer.setSmoothingObservation(SMOOTHING_OBSERVATION);
-      return trainer.trainModel(iterations, indexer);
-    }
-      
     /**
      * Train a model using the GIS algorithm.
      * @param iterations The number of GIS iterations to perform.
@@ -142,9 +126,44 @@ public class GIS {
      *         to disk using an opennlp.maxent.io.GISModelWriter object.
      */
     public static GISModel trainModel(int iterations, DataIndexer indexer) {
-           return trainModel(iterations,indexer,true,false);   
+      return trainModel(iterations,indexer,true,false,null,0);   
     }
-  
+    
+    /**
+     * Train a model using the GIS algorithm with the specified number of iterations, data indexer, and prior. 
+     * @param iterations The number of GIS iterations to perform.
+     * @param indexer The object which will be used for event compilation.
+     * @param modelPrior The prior distribution for the model.
+     * @return The newly trained model, which can be used immediately or saved
+     *         to disk using an opennlp.maxent.io.GISModelWriter object.
+     */
+    public static GISModel trainModel(int iterations, DataIndexer indexer, Prior modelPrior, int cutoff) {
+      return trainModel(iterations,indexer,true,false,modelPrior,cutoff);
+    }
+
+    
+    /**
+     * Train a model using the GIS algorithm.
+     * @param iterations The number of GIS iterations to perform.
+     * @param indexer The object which will be used for event compilation.
+     * @param printMessagesWhileTraining Determines whether training status messages are written to STDOUT.
+     * @param smoothing Defines whether the created trainer will use smoothing while training the model.
+     * @param modelPrior The prior distribution for the model.
+     * @param cutoff The number of times a predicate must occur to be used in a model.
+     * @return The newly trained model, which can be used immediately or saved
+     *         to disk using an opennlp.maxent.io.GISModelWriter object.
+     */
+    public static GISModel trainModel(int iterations, DataIndexer indexer, boolean printMessagesWhileTraining, boolean smoothing, Prior modelPrior, int cutoff) {
+      GISTrainer trainer = new GISTrainer(printMessagesWhileTraining);
+      trainer.setSmoothing(smoothing);
+      trainer.setSmoothingObservation(SMOOTHING_OBSERVATION);
+      if (modelPrior != null) {
+        return trainer.trainModel(iterations, indexer, modelPrior,cutoff);
+      }
+      else {
+        return trainer.trainModel(iterations, indexer,0);
+      }
+    }  
 }
 
 
