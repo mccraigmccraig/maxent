@@ -22,6 +22,7 @@ import gnu.trove.TObjectIntProcedure;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Abstract class for collecting event and context counts used in training. 
@@ -39,6 +40,8 @@ public abstract class AbstractDataIndexer implements DataIndexer {
   protected String[] predLabels;
   /** The names of the outcomes. */
   protected String[] outcomeLabels;
+  /** The number of times each predicate occured. */
+  protected int[] predCounts;
 
   public int[][] getContexts() {
     return contexts;
@@ -61,6 +64,10 @@ public abstract class AbstractDataIndexer implements DataIndexer {
   }
   
   
+
+  public int[] getPredCounts() {
+    return predCounts;
+  }
 
   /**
        * Sorts and uniques the array of comparable events.  This method
@@ -110,25 +117,43 @@ public abstract class AbstractDataIndexer implements DataIndexer {
       ++j;
     }
   }
+  
+  /**
+   * Updates the set of predicated and counter with the specified event contexts and cutoff. 
+   * @param ec The contexts/features which occur in a event.
+   * @param predicateSet The set of predicates which will be used for model building.
+   * @param counter The predicate counters.
+   * @param cutoff The cutoff which determines whether a predicate is included.
+   */
+   protected static void update(String[] ec, Set predicateSet, TObjectIntHashMap counter, int cutoff) {
+    for (int j=0; j<ec.length; j++) {
+      if (!counter.increment(ec[j])) {
+        counter.put(ec[j], 1);
+      }
+      if (predicateSet.contains(ec[j]) && counter.get(ec[j]) >= cutoff) {
+        predicateSet.add(ec[j]);
+      }
+    }
+  }
 
   /**
-       * Utility method for creating a String[] array from a map whose
-       * keys are labels (Strings) to be stored in the array and whose
-       * values are the indices (Integers) at which the corresponding
-       * labels should be inserted.
-       *
-       * @param labelToIndexMap a <code>TObjectIntHashMap</code> value
-       * @return a <code>String[]</code> value
-       * @since maxent 1.2.6
-       */
+   * Utility method for creating a String[] array from a map whose
+   * keys are labels (Strings) to be stored in the array and whose
+   * values are the indices (Integers) at which the corresponding
+   * labels should be inserted.
+   *
+   * @param labelToIndexMap a <code>TObjectIntHashMap</code> value
+   * @return a <code>String[]</code> value
+   * @since maxent 1.2.6
+   */
   protected static String[] toIndexedStringArray(TObjectIntHashMap labelToIndexMap) {
-      final String[] array = new String[labelToIndexMap.size()];
-      labelToIndexMap.forEachEntry(new TObjectIntProcedure() {
-              public boolean execute(Object str, int index) {
-                  array[index] = (String)str;
-                  return true;
-              }
-          });
-      return array;
+    final String[] array = new String[labelToIndexMap.size()];
+    labelToIndexMap.forEachEntry(new TObjectIntProcedure() {
+      public boolean execute(Object str, int index) {
+        array[index] = (String)str;
+        return true;
+      }
+    });
+    return array;
   }
 }

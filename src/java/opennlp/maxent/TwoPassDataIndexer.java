@@ -26,7 +26,9 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Collecting event and context counts by making two passes over the events.  The
@@ -101,25 +103,14 @@ public class TwoPassDataIndexer extends AbstractDataIndexer{
       */
   private int computeEventCounts(EventStream eventStream, Writer eventStore, TObjectIntHashMap predicatesInOut, int cutoff) throws IOException {
     TObjectIntHashMap counter = new TObjectIntHashMap();
-    int predicateIndex = 0;
     int eventCount = 0;
+    Set predicateSet = new HashSet();
     while (eventStream.hasNext()) {
       Event ev = eventStream.nextEvent();
       eventCount++;
       eventStore.write(FileEventStream.toLine(ev));
       String[] ec = ev.getContext();
-      for (int j = 0; j < ec.length; j++) {
-        if (!predicatesInOut.containsKey(ec[j])) {
-          if (counter.increment(ec[j])) {}
-          else {
-            counter.put(ec[j], 1);
-          }
-          if (counter.get(ec[j]) >= cutoff) {
-            predicatesInOut.put(ec[j], predicateIndex++);
-            counter.remove(ec[j]);
-          }
-        }
-      }
+      update(ec,predicateSet,counter,cutoff);
     }
     predicatesInOut.trimToSize();
     eventStore.close();

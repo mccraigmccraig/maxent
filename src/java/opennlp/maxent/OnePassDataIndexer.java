@@ -27,7 +27,7 @@ import java.util.*;
  * used by the GIS trainer.
  *
  * @author      Jason Baldridge
- * @version $Revision: 1.2 $, $Date: 2004/08/29 18:59:12 $
+ * @version $Revision: 1.3 $, $Date: 2006/11/15 21:38:19 $
  */
 public class OnePassDataIndexer extends AbstractDataIndexer  {
 
@@ -90,34 +90,23 @@ public class OnePassDataIndexer extends AbstractDataIndexer  {
      * @return a <code>TLinkedList</code> value
      */
     private TLinkedList computeEventCounts(EventStream eventStream,
-                                           TObjectIntHashMap predicatesInOut,
-                                           int cutoff) {
-        TObjectIntHashMap counter = new TObjectIntHashMap();
-        TLinkedList events = new TLinkedList();
-        int predicateIndex = 0;
-        while (eventStream.hasNext()) {
-            Event ev = eventStream.nextEvent();
-            events.addLast(ev);
-            String[] ec = ev.getContext();
-            for (int j=0; j<ec.length; j++) {
-                if (! predicatesInOut.containsKey(ec[j])) {
-		    if (counter.increment(ec[j])) {
-		    } else {
-                        counter.put(ec[j], 1);
-                    }
-		    if (counter.get(ec[j]) >= cutoff) {
-		      predicatesInOut.put(ec[j], predicateIndex++);
-		      counter.remove(ec[j]);
-                      //if (predicateIndex %1000 == 0) {
-                      //  System.err.println(predicateIndex+ " predicates"+ "event.length="+ec.length+" "+Arrays.asList(ec));                        
-                      //  counter.trimToSize();
-                      //}
-		    }
-                }
-            }
-        }
-        predicatesInOut.trimToSize();
-        return events;
+        TObjectIntHashMap predicatesInOut,
+        int cutoff) {
+      Set predicateSet = new HashSet();
+      TObjectIntHashMap counter = new TObjectIntHashMap();
+      TLinkedList events = new TLinkedList();
+      while (eventStream.hasNext()) {
+        Event ev = eventStream.nextEvent();
+        events.addLast(ev);
+        update(ev.getContext(),predicateSet,counter,cutoff);
+      }
+      predCounts = new int[predicateSet.size()];
+      int index = 0;
+      for (Iterator pi=predicateSet.iterator();pi.hasNext();index++) {
+        String predicate = (String) pi.next();
+        predCounts[index] = counter.get(predicate);
+      }
+      return events;
     }
 
     private List index(TLinkedList events,
@@ -126,7 +115,6 @@ public class OnePassDataIndexer extends AbstractDataIndexer  {
 
         int numEvents = events.size();
         int outcomeCount = 0;
-        int predCount = 0;
         List eventsToCompare = new ArrayList(numEvents);
         TIntArrayList indexedContext = new TIntArrayList();
 
@@ -135,7 +123,7 @@ public class OnePassDataIndexer extends AbstractDataIndexer  {
             String[] econtext = ev.getContext();
             ComparableEvent ce;
 	    
-            int predID, ocID;
+            int ocID;
             String oc = ev.getOutcome();
 	    
             if (omap.containsKey(oc)) {
@@ -157,9 +145,9 @@ public class OnePassDataIndexer extends AbstractDataIndexer  {
                 ce = new ComparableEvent(ocID, indexedContext.toNativeArray());
                 eventsToCompare.add(ce);
             }
-	    else {
-	      System.err.println("Dropped event "+ev.getOutcome()+":"+Arrays.asList(ev.getContext()));
-	    }
+            else {
+              System.err.println("Dropped event "+ev.getOutcome()+":"+Arrays.asList(ev.getContext()));
+            }
             // recycle the TIntArrayList
             indexedContext.resetQuick();
         }
