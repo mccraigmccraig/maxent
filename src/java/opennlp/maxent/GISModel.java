@@ -27,7 +27,7 @@ import java.text.DecimalFormat;
  * Iterative Scaling procedure (implemented in GIS.java).
  *
  * @author      Tom Morton and Jason Baldridge
- * @version     $Revision: 1.17 $, $Date: 2006/11/09 20:53:49 $
+ * @version     $Revision: 1.18 $, $Date: 2006/11/15 21:41:42 $
  */
 public final class GISModel implements MaxentModel {
     /** Maping between predicates/contexts and an integer representing them. */
@@ -48,7 +48,7 @@ public final class GISModel implements MaxentModel {
      * @param correctionParam The parameter associated with the correction feature.
      */
     public GISModel (Context[] params, String[] predLabels, String[] outcomeNames, int correctionConstant, double correctionParam) {
-      this(params,predLabels,outcomeNames,correctionConstant,correctionParam, new UniformPrior(outcomeNames.length));
+      this(params,predLabels,outcomeNames,correctionConstant,correctionParam, new UniformPrior());
     }
 
     /**
