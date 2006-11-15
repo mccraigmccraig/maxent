@@ -37,7 +37,7 @@ package opennlp.maxent;
  *    
  * @author Tom Morton
  * @author  Jason Baldridge
- * @version $Revision: 1.21 $, $Date: 2006/11/09 20:55:23 $
+ * @version $Revision: 1.22 $, $Date: 2006/11/15 21:41:06 $
  */
 class GISTrainer {
 
@@ -62,8 +62,8 @@ class GISTrainer {
 
   private boolean printMessages = false;
 
-  /** Number of event tokens. */
-  private int numTokens; 
+  /** Number of unique events which occured in the event set. */
+  private int numUniqueEvents; 
   /** Number of predicates. */
   private int numPreds; 
   /** Number of outcomes. */
@@ -79,6 +79,11 @@ class GISTrainer {
 
   /** Records the num of times an event has been seen for each event i, in context[i]. */
   private int[] numTimesEventsSeen;
+  
+  /** The number of times a predicate occured in the training data. */
+  private int[] predicateCounts;
+  
+  private int cutoff;
 
   /** Stores the String names of the outcomes.  The GIS only tracks outcomes
    as ints, and so this array is needed to save the model to disk and
@@ -175,7 +180,7 @@ class GISTrainer {
    * @return A GIS model trained with specified 
    */
   public GISModel trainModel(EventStream eventStream, int iterations, int cutoff) {
-    return trainModel(iterations, new OnePassDataIndexer(eventStream,cutoff));
+    return trainModel(iterations, new OnePassDataIndexer(eventStream,cutoff),cutoff);
   }
   
   /**
@@ -186,8 +191,8 @@ class GISTrainer {
    * @return The newly trained model, which can be used immediately or saved
    *         to disk using an opennlp.maxent.io.GISModelWriter object.
    */
-  public GISModel trainModel(int iterations, DataIndexer di) {
-    return trainModel(iterations,di,new UniformPrior(di.getOutcomeList().length));
+  public GISModel trainModel(int iterations, DataIndexer di, int cutoff) {
+    return trainModel(iterations,di,new UniformPrior(),cutoff);
   }
 
   /**
@@ -199,13 +204,15 @@ class GISTrainer {
    * @return The newly trained model, which can be used immediately or saved
    *         to disk using an opennlp.maxent.io.GISModelWriter object.
    */
-  public GISModel trainModel(int iterations, DataIndexer di, Prior modelPrior) {
+  public GISModel trainModel(int iterations, DataIndexer di, Prior modelPrior, int cutoff) {
     /************** Incorporate all of the needed info ******************/
     display("Incorporating indexed data for training...  \n");
     contexts = di.getContexts();
     outcomes = di.getOutcomeList();
+    this.cutoff = cutoff;
+    predicateCounts = di.getPredCounts();
     numTimesEventsSeen = di.getNumTimesEventsSeen();
-    numTokens = contexts.length;
+    numUniqueEvents = contexts.length;
     this.prior = modelPrior;
     //printTable(contexts);
 
@@ -224,17 +231,20 @@ class GISTrainer {
     iprob = Math.log(1.0 / numOutcomes);
 
     predLabels = di.getPredLabels();
+    prior.setLabels(outcomeLabels,predLabels);
     numPreds = predLabels.length;
 
-    display("\tNumber of Event Tokens: " + numTokens + "\n");
+    display("\tNumber of Event Tokens: " + numUniqueEvents + "\n");
     display("\t    Number of Outcomes: " + numOutcomes + "\n");
     display("\t  Number of Predicates: " + numPreds + "\n");
 
     // set up feature arrays
     int[][] predCount = new int[numPreds][numOutcomes];
-    for (int ti = 0; ti < numTokens; ti++)
-      for (int j = 0; j < contexts[ti].length; j++)
+    for (int ti = 0; ti < numUniqueEvents; ti++) {
+      for (int j = 0; j < contexts[ti].length; j++) {
         predCount[contexts[ti][j]][outcomeList[ti]] += numTimesEventsSeen[ti];
+      }
+    }
 
     //printTable(predCount);
     di = null; // don't need it anymore
@@ -302,7 +312,7 @@ class GISTrainer {
     // compute the expected value of correction
     if (useSlackParameter) {
       int cfvalSum = 0;
-      for (int ti = 0; ti < numTokens; ti++) {
+      for (int ti = 0; ti < numUniqueEvents; ti++) {
         for (int j = 0; j < contexts[ti].length; j++) {
           int pi = contexts[ti][j];
           if (!modelExpects[pi].contains(outcomes[ti])) {
@@ -401,29 +411,31 @@ class GISTrainer {
     CFMOD = 0.0;
     int numEvents = 0;
     int numCorrect = 0;
-    for (int TID = 0; TID < numTokens; TID++) {
-      prior.logPrior(modelDistribution,contexts[TID]);
-      GISModel.eval(contexts[TID], modelDistribution, evalParams);
-      for (int j = 0; j < contexts[TID].length; j++) {
-        int pi = contexts[TID][j];
-        int[] activeOutcomes = modelExpects[pi].getOutcomes();
-        for (int aoi=0;aoi<activeOutcomes.length;aoi++) {
-          int oi = activeOutcomes[aoi];
-          modelExpects[pi].updateParameter(aoi,modelDistribution[oi] * numTimesEventsSeen[TID]);
-        }
-        if (useSlackParameter) {
-          for (int oi = 0; oi < numOutcomes; oi++) {
-            if (!modelExpects[pi].contains(oi)) {
-              CFMOD += modelDistribution[oi] * numTimesEventsSeen[TID];
+    for (int ei = 0; ei < numUniqueEvents; ei++) {
+      prior.logPrior(modelDistribution,contexts[ei]);
+      GISModel.eval(contexts[ei], modelDistribution, evalParams);
+      for (int j = 0; j < contexts[ei].length; j++) {
+        int pi = contexts[ei][j];
+        if (predicateCounts[pi] > cutoff) {
+          int[] activeOutcomes = modelExpects[pi].getOutcomes();
+          for (int aoi=0;aoi<activeOutcomes.length;aoi++) {
+            int oi = activeOutcomes[aoi];
+            modelExpects[pi].updateParameter(aoi,modelDistribution[oi] * numTimesEventsSeen[ei]);
+          }
+          if (useSlackParameter) {
+            for (int oi = 0; oi < numOutcomes; oi++) {
+              if (!modelExpects[pi].contains(oi)) {
+                CFMOD += modelDistribution[oi] * numTimesEventsSeen[ei];
+              }
             }
           }
         }
       }
       if (useSlackParameter)
-        CFMOD += (evalParams.correctionConstant - contexts[TID].length) * numTimesEventsSeen[TID];
+        CFMOD += (evalParams.correctionConstant - contexts[ei].length) * numTimesEventsSeen[ei];
 
-      loglikelihood += Math.log(modelDistribution[outcomes[TID]]) * numTimesEventsSeen[TID];
-      numEvents += numTimesEventsSeen[TID];
+      loglikelihood += Math.log(modelDistribution[outcomes[ei]]) * numTimesEventsSeen[ei];
+      numEvents += numTimesEventsSeen[ei];
       if (printMessages) {
         int max = 0;
         for (int oi = 1; oi < numOutcomes; oi++) {
@@ -431,8 +443,8 @@ class GISTrainer {
             max = oi;
           }
         }
-        if (max == outcomes[TID]) {
-          numCorrect += numTimesEventsSeen[TID];
+        if (max == outcomes[ei]) {
+          numCorrect += numTimesEventsSeen[ei];
         }
       }
 
@@ -449,7 +461,7 @@ class GISTrainer {
           params[pi].updateParameter(aoi,gaussianUpdate(pi,aoi,numEvents,evalParams.correctionConstant));
         }
         else {
-          params[pi].updateParameter(aoi,((Math.log(observed[aoi])) - Math.log(model[aoi])));
+          params[pi].updateParameter(aoi,(Math.log(observed[aoi]) - Math.log(model[aoi])));
         }
         modelExpects[pi].setParameter(aoi,0.0); // re-initialize to 0.0's
       }
