@@ -14,4 +14,13 @@ public interface Prior {
    * @param context The indices of the contextual predicates for an event.
    */
   public void logPrior(double[] dist, int[] context);
+
+  /**
+   * Method to specify the label for the outcomes and contexts.  This is used to map 
+   * integer outcomes and contexts to their string values.  This method is called prior
+   * to any call to #logPrior.
+   * @param outcomeLabels An array of each outcome label.
+   * @param contextLabels An array of each context label.
+   */
+  public void setLabels(String[] outcomeLabels, String[] contextLabels);
 }
