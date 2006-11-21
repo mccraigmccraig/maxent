@@ -27,7 +27,7 @@ import java.util.*;
  * used by the GIS trainer.
  *
  * @author      Jason Baldridge
- * @version $Revision: 1.3 $, $Date: 2006/11/15 21:38:19 $
+ * @version $Revision: 1.4 $, $Date: 2006/11/21 21:29:59 $
  */
 public class OnePassDataIndexer extends AbstractDataIndexer  {
 
@@ -105,6 +105,7 @@ public class OnePassDataIndexer extends AbstractDataIndexer  {
       for (Iterator pi=predicateSet.iterator();pi.hasNext();index++) {
         String predicate = (String) pi.next();
         predCounts[index] = counter.get(predicate);
+        predicatesInOut.put(predicate,index);
       }
       return events;
     }
