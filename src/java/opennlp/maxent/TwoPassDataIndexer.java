@@ -27,6 +27,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -112,7 +113,13 @@ public class TwoPassDataIndexer extends AbstractDataIndexer{
       String[] ec = ev.getContext();
       update(ec,predicateSet,counter,cutoff);
     }
-    predicatesInOut.trimToSize();
+    predCounts = new int[predicateSet.size()];
+    int index = 0;
+    for (Iterator pi=predicateSet.iterator();pi.hasNext();index++) {
+      String predicate = (String) pi.next();
+      predCounts[index] = counter.get(predicate);
+      predicatesInOut.put(predicate,index);
+    }
     eventStore.close();
     return eventCount;
   }
