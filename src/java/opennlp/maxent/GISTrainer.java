@@ -37,7 +37,7 @@ package opennlp.maxent;
  *    
  * @author Tom Morton
  * @author  Jason Baldridge
- * @version $Revision: 1.23 $, $Date: 2006/11/21 21:31:19 $
+ * @version $Revision: 1.24 $, $Date: 2006/11/21 23:00:55 $
  */
 class GISTrainer {
 
@@ -278,7 +278,7 @@ class GISTrainer {
       }
       else { //determine active outcomes
         for (int oi = 0; oi < numOutcomes; oi++) {
-          if (predCount[pi][oi] > 0) {
+          if (predCount[pi][oi] > 0 && predicateCounts[pi] > cutoff) {
             activeOutcomes[numActiveOutcomes] = oi;
             numActiveOutcomes++;
           }
@@ -433,7 +433,7 @@ class GISTrainer {
       }
       if (useSlackParameter)
         CFMOD += (evalParams.correctionConstant - contexts[ei].length) * numTimesEventsSeen[ei];
-
+      
       loglikelihood += Math.log(modelDistribution[outcomes[ei]]) * numTimesEventsSeen[ei];
       numEvents += numTimesEventsSeen[ei];
       if (printMessages) {
@@ -461,6 +461,9 @@ class GISTrainer {
           params[pi].updateParameter(aoi,gaussianUpdate(pi,aoi,numEvents,evalParams.correctionConstant));
         }
         else {
+          if (model[aoi] == 0) {
+            System.err.println("Model expects == 0 for "+predLabels[pi]+" "+outcomeLabels[aoi]);
+          }
           params[pi].updateParameter(aoi,(Math.log(observed[aoi]) - Math.log(model[aoi])));
         }
         modelExpects[pi].setParameter(aoi,0.0); // re-initialize to 0.0's
