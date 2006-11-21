@@ -37,7 +37,7 @@ package opennlp.maxent;
  *    
  * @author Tom Morton
  * @author  Jason Baldridge
- * @version $Revision: 1.22 $, $Date: 2006/11/15 21:41:06 $
+ * @version $Revision: 1.23 $, $Date: 2006/11/21 21:31:19 $
  */
 class GISTrainer {
 
@@ -416,7 +416,7 @@ class GISTrainer {
       GISModel.eval(contexts[ei], modelDistribution, evalParams);
       for (int j = 0; j < contexts[ei].length; j++) {
         int pi = contexts[ei][j];
-        if (predicateCounts[pi] > cutoff) {
+        if (predicateCounts[pi] >= cutoff) {
           int[] activeOutcomes = modelExpects[pi].getOutcomes();
           for (int aoi=0;aoi<activeOutcomes.length;aoi++) {
             int oi = activeOutcomes[aoi];
