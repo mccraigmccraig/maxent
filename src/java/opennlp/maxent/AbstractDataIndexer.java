@@ -130,7 +130,7 @@ public abstract class AbstractDataIndexer implements DataIndexer {
       if (!counter.increment(ec[j])) {
         counter.put(ec[j], 1);
       }
-      if (predicateSet.contains(ec[j]) && counter.get(ec[j]) >= cutoff) {
+      if (!predicateSet.contains(ec[j]) && counter.get(ec[j]) >= cutoff) {
         predicateSet.add(ec[j]);
       }
     }
