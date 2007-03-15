@@ -19,8 +19,10 @@ package opennlp.maxent;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.StringTokenizer;
 
 import opennlp.maxent.io.SuffixSensitiveGISModelWriter;
@@ -41,8 +43,21 @@ public class FileEventStream implements EventStream {
    * @param fileName the name fo the file containing the events.
    * @throws IOException When the specified file can not be read.
    */
+  public FileEventStream(String fileName, String encoding) throws IOException {
+    if (encoding == null) {
+      reader = new BufferedReader(new FileReader(fileName));
+    }
+    else {
+      reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileName),encoding));
+    }
+  }
+  
   public FileEventStream(String fileName) throws IOException {
-    reader = new BufferedReader(new FileReader(fileName));
+    this(fileName,null);
+  }
+  
+  public FileEventStream(File file) throws IOException {
+    this(file,null);
   }
   
   /**
@@ -50,8 +65,13 @@ public class FileEventStream implements EventStream {
    * @param file the file containing the events.
    * @throws IOException When the specified file can not be read.
    */
-  public FileEventStream(File file) throws IOException {
-    reader = new BufferedReader(new FileReader(file));
+  public FileEventStream(File file, String encoding) throws IOException {
+    if (encoding == null) {
+      reader = new BufferedReader(new FileReader(file));
+    }
+    else {
+      reader = new BufferedReader(new InputStreamReader(new FileInputStream(file),encoding));
+    }
   }
   
   public boolean hasNext() {
