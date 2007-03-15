@@ -27,7 +27,7 @@ import java.text.DecimalFormat;
  * Iterative Scaling procedure (implemented in GIS.java).
  *
  * @author      Tom Morton and Jason Baldridge
- * @version     $Revision: 1.18 $, $Date: 2006/11/15 21:41:42 $
+ * @version     $Revision: 1.19 $, $Date: 2007/03/15 04:51:26 $
  */
 public final class GISModel implements MaxentModel {
     /** Maping between predicates/contexts and an integer representing them. */
@@ -100,21 +100,42 @@ public final class GISModel implements MaxentModel {
      *                getOutcome(int i).
      */
     public static double[] eval(int[] context, double[] prior, EvalParameters model) {
+      return eval(context,null,prior,model);
+    }
+    
+    /**
+     * Use this model to evaluate a context and return an array of the
+     * likelihood of each outcome given the specified context and the specified parameters.
+     * @param context The integer values of the predicates which have been observed at
+     *                the present decision point.
+     * @param prior The prior distribution for the specified context.
+     * @param model The set of parametes used in this computation.
+     * @return The normalized probabilities for the outcomes given the
+     *                context. The indexes of the double[] are the outcome
+     *                ids, and the actual string representation of the
+     *                outcomes can be obtained from the method
+     *                getOutcome(int i).
+     */
+    public static double[] eval(int[] context, float[] values, double[] prior, EvalParameters model) {
       Context[] params = model.params;
       for (int oid = 0; oid < model.numOutcomes; oid++) {
         model.numfeats[oid] = 0;
       }
       int[] activeOutcomes;
-      double[] activeParameters; 
-      for (int i = 0; i < context.length; i++) {
-        if (context[i] >= 0) {
-          Context predParams = params[context[i]];
+      double[] activeParameters;
+      double value = 1;
+      for (int ci = 0; ci < context.length; ci++) {
+        if (context[ci] >= 0) {
+          Context predParams = params[context[ci]];
           activeOutcomes = predParams.getOutcomes();
           activeParameters = predParams.getParameters();
-          for (int j = 0; j < activeOutcomes.length; j++) {
-            int oid = activeOutcomes[j];
+          if (values != null) {
+            value = values[ci];
+          }
+          for (int ai = 0; ai < activeOutcomes.length; ai++) {
+            int oid = activeOutcomes[ai];
             model.numfeats[oid]++;
-            prior[oid] += activeParameters[j];
+            prior[oid] += activeParameters[ai] * value;
           }
         }
       }
@@ -283,52 +304,4 @@ public final class GISModel implements MaxentModel {
         System.out.println();
       }
     }
-}
-
-/**
- * This class encapsulates the varibales used in producing probabilities from a model 
- * and facilitaes passing these variables to the eval method.  Variables are declared
- * non-private so that they may be accessed and updated without a method call for efficiency
- * reasons.
- * @author Tom Morton
- *
- */
-class EvalParameters {
-  
- /** Mapping between outcomes and paramater values for each context. 
-   * The integer representation of the context can be found using <code>pmap</code>.*/
-  Context[] params;
-  /** The number of outcomes being predicted. */
-  final int numOutcomes;
-  /** The maximum number of feattures fired in an event. Usually refered to a C.
-   * This is used to normalize the number of features which occur in an event. */
-  double correctionConstant;
-  
-  /**  Stores inverse of the correction constant, 1/C. */
-  final double constantInverse;
-  /** The correction parameter of the model. */
-  double correctionParam;
-  /** Log of 1/C; initial value of probabilities. */
-  final double iprob;
-  
-  /** Stores the number of features that get fired for each outcome in an event. 
-   * This is over-written for each event evaluation, but declared once for efficiency.*/
-  int[] numfeats;
-  
-  /**
-   * Creates a set of paramters which can be evaulated with the eval method.
-   * @param params The parameters of the model.
-   * @param correctionParam The correction paramter.
-   * @param correctionConstant The correction constant.
-   * @param numOutcomes The number of outcomes.
-   */
-  public EvalParameters(Context[] params, double correctionParam, double correctionConstant, int numOutcomes) {
-    this.params = params;
-    this.correctionParam = correctionParam;
-    this.numOutcomes = numOutcomes;
-    this.numfeats = new int[numOutcomes];
-    this.correctionConstant = correctionConstant;
-    this.constantInverse = 1.0 / correctionConstant;
-    this.iprob = Math.log(1.0/numOutcomes);
-  }  
 }

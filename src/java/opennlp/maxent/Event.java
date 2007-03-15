@@ -24,22 +24,52 @@ import java.util.Arrays;
  * contextual predicates and an outcome.
  *
  * @author      Jason Baldridge
- * @version     $Revision: 1.3 $, $Date: 2003/12/09 23:13:08 $
+ * @version     $Revision: 1.4 $, $Date: 2007/03/15 04:51:26 $
  */
 public class Event extends gnu.trove.TLinkableAdaptor {
     private String outcome;
     private String[] context;
+    private float[] values;
     
-    public Event(String oc, String[] c) {
-	outcome = oc;
-	context = c;
+    public Event(String outcome, String[] context) {
+      this(outcome,context,null);
     }
     
-    public String getOutcome() { return outcome; }
-    public String[] getContext() { return context; }
+    public Event(String outcome, String[] context, float[] values) {
+      this.outcome = outcome;
+      this.context = context;
+      this.values = values;
+    }
+    
+    public String getOutcome() { 
+      return outcome; 
+    }
+    
+    public String[] getContext() { 
+      return context; 
+    }
+    
+    public float[] getValues() {
+      return values;
+    }
     
     public String toString() {
-      return outcome+" "+Arrays.asList(context);
+      StringBuffer sb = new StringBuffer();
+      sb.append(outcome).append(" [");
+      if (context.length > 0) {
+        sb.append(context[0]);
+        if (values != null) {
+          sb.append("="+values[0]);
+        }
+      }
+      for (int ci=1;ci<context.length;ci++) {
+        sb.append(" ").append(context[ci]);
+        if (values != null) {
+          sb.append("="+values[ci]);
+        }
+      }
+      sb.append("]");
+      return sb.toString();
     }
     
 }

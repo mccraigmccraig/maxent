@@ -37,7 +37,7 @@ package opennlp.maxent;
  *    
  * @author Tom Morton
  * @author  Jason Baldridge
- * @version $Revision: 1.24 $, $Date: 2006/11/21 23:00:55 $
+ * @version $Revision: 1.25 $, $Date: 2007/03/15 04:51:26 $
  */
 class GISTrainer {
 
@@ -71,6 +71,9 @@ class GISTrainer {
 
   /** Records the array of predicates seen in each event. */
   private int[][] contexts;
+  
+  /** The value associates with each context. If null then context values are assumes to be 1. */
+  private float[][] values;
 
   /** Records the array of outcomes seen in each event. */
   private int[] outcomes;
@@ -208,6 +211,7 @@ class GISTrainer {
     /************** Incorporate all of the needed info ******************/
     display("Incorporating indexed data for training...  \n");
     contexts = di.getContexts();
+    values = di.getValues();
     outcomes = di.getOutcomeList();
     this.cutoff = cutoff;
     predicateCounts = di.getPredCounts();
@@ -413,7 +417,7 @@ class GISTrainer {
     int numCorrect = 0;
     for (int ei = 0; ei < numUniqueEvents; ei++) {
       prior.logPrior(modelDistribution,contexts[ei]);
-      GISModel.eval(contexts[ei], modelDistribution, evalParams);
+      GISModel.eval(contexts[ei], values[ei], modelDistribution, evalParams);
       for (int j = 0; j < contexts[ei].length; j++) {
         int pi = contexts[ei][j];
         if (predicateCounts[pi] >= cutoff) {

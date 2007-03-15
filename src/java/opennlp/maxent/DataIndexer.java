@@ -57,4 +57,10 @@ public interface DataIndexer {
     * @return an array of outcome names indexed by outcome index.
     */
   public String[] getOutcomeLabels(); 
+  
+  /**
+   * Returns the values associated with each event context or null if integer values are to be used. 
+   * @return the values associated with each event context.
+   */
+  public float[][] getValues();
 }

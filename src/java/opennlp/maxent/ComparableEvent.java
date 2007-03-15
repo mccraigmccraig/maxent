@@ -24,7 +24,7 @@ import java.util.*;
  * predicates indexes contained in the events.
  *
  * @author      Jason Baldridge
- * @version $Revision: 1.2 $, $Date: 2001/12/27 19:20:26 $
+ * @version $Revision: 1.3 $, $Date: 2007/03/15 04:51:26 $
  */
 public class ComparableEvent implements Comparable {
     public int outcome;
@@ -32,10 +32,16 @@ public class ComparableEvent implements Comparable {
     public int seen = 1;            // the number of times this event
                                     // has been seen.
 
-    public ComparableEvent(int oc, int[] pids) {
+    public float[] values;
+    
+    public ComparableEvent(int oc, int[] pids, float[] values) {
         outcome = oc;
         Arrays.sort(pids);
         predIndexes = pids;
+    }
+    
+    public ComparableEvent(int oc, int[] pids) {
+      this(oc,pids,null);
     }
 
     public int compareTo(Object o) {

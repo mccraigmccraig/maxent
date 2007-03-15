@@ -70,20 +70,21 @@ public abstract class AbstractDataIndexer implements DataIndexer {
   }
 
   /**
-       * Sorts and uniques the array of comparable events.  This method
-       * will alter the eventsToCompare array -- it does an in place
+       * Sorts and uniques the array of comparable events and return the number of unique events.
+       * This method will alter the eventsToCompare array -- it does an in place
        * sort, followed by an in place edit to remove duplicates.
        *
        * @param eventsToCompare a <code>ComparableEvent[]</code> value
+       * @return The number of unique events in the specified list.
        * @since maxent 1.2.6
        */
-  protected void sortAndMerge(List eventsToCompare) {
+  protected int sortAndMerge(List eventsToCompare) {
     Collections.sort(eventsToCompare);
     int numEvents = eventsToCompare.size();
     int numUniqueEvents = 1; // assertion: eventsToCompare.length >= 1
 
     if (numEvents <= 1) {
-      return; // nothing to do; edge case (see assertion)
+      return numUniqueEvents; // nothing to do; edge case (see assertion)
     }
 
     ComparableEvent ce = (ComparableEvent) eventsToCompare.get(0);
@@ -116,6 +117,7 @@ public abstract class AbstractDataIndexer implements DataIndexer {
       contexts[j] = evt.predIndexes;
       ++j;
     }
+    return numUniqueEvents;
   }
   
   /**
@@ -156,4 +158,10 @@ public abstract class AbstractDataIndexer implements DataIndexer {
     });
     return array;
   }
+
+  public float[][] getValues() {
+    return null;
+  }
+  
+  
 }

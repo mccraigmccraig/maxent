@@ -17,17 +17,24 @@
 //////////////////////////////////////////////////////////////////////////////   
 package opennlp.maxent;
 
-import gnu.trove.*;
-import java.util.*;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TLinkedList;
+import gnu.trove.TObjectIntHashMap;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 /**
  * An indexer for maxent model data which handles cutoffs for uncommon
  * contextual predicates and provides a unique integer index for each of the
- * predicates.  The data structures built in the constructor of this class are
- * used by the GIS trainer.
+ * predicates. 
  *
  * @author      Jason Baldridge
- * @version $Revision: 1.4 $, $Date: 2006/11/21 21:29:59 $
+ * @version $Revision: 1.5 $, $Date: 2007/03/15 04:51:26 $
  */
 public class OnePassDataIndexer extends AbstractDataIndexer  {
 
@@ -110,7 +117,7 @@ public class OnePassDataIndexer extends AbstractDataIndexer  {
       return events;
     }
 
-    private List index(TLinkedList events,
+    protected List index(TLinkedList events,
                        TObjectIntHashMap predicateIndex) {
         TObjectIntHashMap omap = new TObjectIntHashMap();
 
@@ -156,4 +163,5 @@ public class OnePassDataIndexer extends AbstractDataIndexer  {
         predLabels = toIndexedStringArray(predicateIndex);
         return eventsToCompare;
     }
+    
 }
