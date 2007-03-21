@@ -1,20 +1,20 @@
 ///////////////////////////////////////////////////////////////////////////////
-// Copyright (C) 2001 Jason Baldridge
+//Copyright (C) 2001 Jason Baldridge
 //
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or (at your option) any later version.
+//This library is free software; you can redistribute it and/or
+//modify it under the terms of the GNU Lesser General Public
+//License as published by the Free Software Foundation; either
+//version 2.1 of the License, or (at your option) any later version.
 //
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
+//This library is distributed in the hope that it will be useful,
+//but WITHOUT ANY WARRANTY; without even the implied warranty of
+//MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//GNU General Public License for more details.
 //
-// You should have received a copy of the GNU Lesser General Public
-// License along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-//////////////////////////////////////////////////////////////////////////////   
+//You should have received a copy of the GNU Lesser General Public
+//License along with this program; if not, write to the Free Software
+//Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+//////////////////////////////////////////////////////////////////////////////
 package opennlp.maxent;
 
 /**
@@ -27,58 +27,58 @@ package opennlp.maxent;
  * <p> cp_1 cp_2 ... cp_n outcome
  *
  * @author      Jason Baldridge
- * @version $Revision: 1.2 $, $Date: 2004/05/10 03:11:54 $ 
-*/
+ * @version $Revision: 1.3 $, $Date: 2007/03/21 19:02:10 $ 
+ */
 public class BasicEventStream implements EventStream {
-    ContextGenerator _cg = new BasicContextGenerator();
-    DataStream _ds;
-    Event _next;
-
-    public BasicEventStream (DataStream ds) {
-	_ds = ds;
-	if (_ds.hasNext())
-	    _next = createEvent((String)_ds.nextToken());
+  ContextGenerator cg = new BasicContextGenerator();
+  DataStream ds;
+  Event next;
+  
+  public BasicEventStream (DataStream ds) {
+    this.ds = ds;
+    if (this.ds.hasNext())
+      next = createEvent((String)this.ds.nextToken());
+  }
+  
+  /**
+   * Returns the next Event object held in this EventStream.  Each call to nextEvent advances the EventStream.
+   *
+   * @return the Event object which is next in this EventStream
+   */
+  public Event nextEvent () {
+    while (next == null && this.ds.hasNext())
+      next = createEvent((String)this.ds.nextToken());
+    
+    Event current = next;
+    if (this.ds.hasNext()) {
+      next = createEvent((String)this.ds.nextToken());
     }
-
-    /**
-     * Returns the next Event object held in this EventStream.  Each call to nextEvent advances the EventStream.
-     *
-     * @return the Event object which is next in this EventStream
-     */
-    public Event nextEvent () {
-	while (_next == null && _ds.hasNext())
-	    _next = createEvent((String)_ds.nextToken());
-
-	Event current = _next;
-	if (_ds.hasNext()) {
-	    _next = createEvent((String)_ds.nextToken());
-	}
-	else {
-	    _next = null;
-	}
-	return current;
+    else {
+      next = null;
     }
- 
-    /**
-     * Test whether there are any Events remaining in this EventStream.
-     *
-     * @return true if this EventStream has more Events
-     */
-    public boolean hasNext () {
-	while (_next == null && _ds.hasNext())
-	    _next = createEvent((String)_ds.nextToken());
-	return _next != null;
-    }
-
-    private Event createEvent(String obs) {
-	int lastSpace = obs.lastIndexOf(' ');
-	if (lastSpace == -1) 
-	    return null;
-	else
-	    return new Event(obs.substring(lastSpace+1),
-			     _cg.getContext(obs.substring(0, lastSpace)));
-    }
-
-
+    return current;
+  }
+  
+  /**
+   * Test whether there are any Events remaining in this EventStream.
+   *
+   * @return true if this EventStream has more Events
+   */
+  public boolean hasNext () {
+    while (next == null && ds.hasNext())
+      next = createEvent((String)ds.nextToken());
+    return next != null;
+  }
+  
+  private Event createEvent(String obs) {
+    int lastSpace = obs.lastIndexOf(' ');
+    if (lastSpace == -1) 
+      return null;
+    else
+      return new Event(obs.substring(lastSpace+1),
+          cg.getContext(obs.substring(0, lastSpace)));
+  }
+  
+  
 }
 
