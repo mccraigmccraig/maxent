@@ -17,14 +17,13 @@
 //////////////////////////////////////////////////////////////////////////////   
 package opennlp.maxent;
 
-import java.util.Arrays;
 
 /**
  * The context of a decision point during training.  This includes
  * contextual predicates and an outcome.
  *
  * @author      Jason Baldridge
- * @version     $Revision: 1.4 $, $Date: 2007/03/15 04:51:26 $
+ * @version     $Revision: 1.5 $, $Date: 2007/03/21 19:02:43 $
  */
 public class Event extends gnu.trove.TLinkableAdaptor {
     private String outcome;
