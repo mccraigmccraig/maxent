@@ -24,7 +24,7 @@ import java.util.*;
  * predicates indexes contained in the events.
  *
  * @author      Jason Baldridge
- * @version $Revision: 1.3 $, $Date: 2007/03/15 04:51:26 $
+ * @version $Revision: 1.4 $, $Date: 2007/03/21 19:04:37 $
  */
 public class ComparableEvent implements Comparable {
     public int outcome;
@@ -36,7 +36,13 @@ public class ComparableEvent implements Comparable {
     
     public ComparableEvent(int oc, int[] pids, float[] values) {
         outcome = oc;
-        Arrays.sort(pids);
+        if (values == null) {
+          Arrays.sort(pids);
+        }
+        else {
+          sort(pids,values);
+        }
+        this.values = values; //needs to be sorted like pids
         predIndexes = pids;
     }
     
@@ -46,7 +52,6 @@ public class ComparableEvent implements Comparable {
 
     public int compareTo(Object o) {
         ComparableEvent ce = (ComparableEvent)o;
-
         if (outcome < ce.outcome) return -1;
         else if (outcome > ce.outcome) return 1;
 	
@@ -56,6 +61,10 @@ public class ComparableEvent implements Comparable {
         for (int i=0; i<smallerLength; i++) {
             if (predIndexes[i] < ce.predIndexes[i]) return -1;
             else if (predIndexes[i] > ce.predIndexes[i]) return 1;
+            if (values != null) {
+              if (values[i] < ce.values[i]) return -1;
+              else if (values[i] > ce.values[i]) return 1;
+            }
         }
 
 
@@ -69,6 +78,23 @@ public class ComparableEvent implements Comparable {
         String s = "";
         for (int i=0; i<predIndexes.length; i++) s+= " "+predIndexes[i];
         return s;
+    }
+    
+    private void sort(int[] pids, float[] values) {
+      for (int mi=0;mi<pids.length;mi++) {
+        int min = mi;
+        for (int pi=mi+1;pi<pids.length;pi++) {
+          if (pids[min] > pids[pi]) {
+            min = pi;
+          }
+        }
+        int pid = pids[mi];
+        pids[mi] = pids[min];
+        pids[min] = pid;
+        float val = values[mi];
+        values[mi] = values[min];
+        values[min] = val;
+      }
     }
 }
  

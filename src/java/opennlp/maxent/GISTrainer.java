@@ -37,7 +37,7 @@ package opennlp.maxent;
  *    
  * @author Tom Morton
  * @author  Jason Baldridge
- * @version $Revision: 1.25 $, $Date: 2007/03/15 04:51:26 $
+ * @version $Revision: 1.26 $, $Date: 2007/03/21 19:04:37 $
  */
 class GISTrainer {
 
@@ -416,8 +416,14 @@ class GISTrainer {
     int numEvents = 0;
     int numCorrect = 0;
     for (int ei = 0; ei < numUniqueEvents; ei++) {
-      prior.logPrior(modelDistribution,contexts[ei]);
-      GISModel.eval(contexts[ei], values[ei], modelDistribution, evalParams);
+      if (values != null) {
+        prior.logPrior(modelDistribution,contexts[ei],values[ei]);
+        GISModel.eval(contexts[ei], values[ei], modelDistribution, evalParams);
+      }
+      else {
+        prior.logPrior(modelDistribution,contexts[ei]);
+        GISModel.eval(contexts[ei], modelDistribution, evalParams);
+      }
       for (int j = 0; j < contexts[ei].length; j++) {
         int pi = contexts[ei][j];
         if (predicateCounts[pi] >= cutoff) {

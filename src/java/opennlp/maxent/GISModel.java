@@ -27,7 +27,7 @@ import java.text.DecimalFormat;
  * Iterative Scaling procedure (implemented in GIS.java).
  *
  * @author      Tom Morton and Jason Baldridge
- * @version     $Revision: 1.19 $, $Date: 2007/03/15 04:51:26 $
+ * @version     $Revision: 1.20 $, $Date: 2007/03/21 19:04:37 $
  */
 public final class GISModel implements MaxentModel {
     /** Maping between predicates/contexts and an integer representing them. */
@@ -86,6 +86,10 @@ public final class GISModel implements MaxentModel {
       return(eval(context,new double[evalParams.numOutcomes]));
     }
     
+    public final double[] eval(String[] context, float[] values) {
+      return(eval(context,values,new double[evalParams.numOutcomes]));
+    }
+    
     /**
      * Use this model to evaluate a context and return an array of the
      * likelihood of each outcome given the specified context and the specified parameters.
@@ -108,6 +112,7 @@ public final class GISModel implements MaxentModel {
      * likelihood of each outcome given the specified context and the specified parameters.
      * @param context The integer values of the predicates which have been observed at
      *                the present decision point.
+     *                @param values The values for each of the parameters.
      * @param prior The prior distribution for the specified context.
      * @param model The set of parametes used in this computation.
      * @return The normalized probabilities for the outcomes given the
@@ -157,6 +162,10 @@ public final class GISModel implements MaxentModel {
       return prior;
     }
     
+    public final double[] eval(String[] context, double[] outsums) {
+      return eval(context,null,outsums);
+    }
+    
     /**
      * Use this model to evaluate a context and return an array of the
      * likelihood of each outcome given that context.
@@ -170,13 +179,13 @@ public final class GISModel implements MaxentModel {
      *                outcomes can be obtained from the method
      *                getOutcome(int i).
      */
-    public final double[] eval(String[] context, double[] outsums) {
+    public final double[] eval(String[] context, float[] values, double[] outsums) {
       int[] scontexts = new int[context.length];
       for (int i=0; i<context.length; i++) {
         scontexts[i] = pmap.get(context[i]);
       }
-      prior.logPrior(outsums, scontexts);
-      return GISModel.eval(scontexts,outsums,evalParams);
+      prior.logPrior(outsums, scontexts,values);
+      return GISModel.eval(scontexts,values,outsums,evalParams);
     }
 
     

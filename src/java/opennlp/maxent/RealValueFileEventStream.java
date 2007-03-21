@@ -20,14 +20,19 @@ public class RealValueFileEventStream extends FileEventStream {
     StringTokenizer st = new StringTokenizer(line);
     String outcome = st.nextToken();
     int count = st.countTokens();
-    String[] context = new String[count];
+    String[] contexts = new String[count];
     float[] values = new float[count];
     boolean hasRealValue = false;
     for (int ci = 0; ci < count; ci++) {
-      context[ci] = st.nextToken();
-      int ei = context[ci].lastIndexOf("=");
-      if (ei > 0 && ei+1 < context[ci].length()) {
-        values[ci] = Float.parseFloat(context[ci].substring(ei+1));
+      contexts[ci] = st.nextToken();
+      int ei = contexts[ci].lastIndexOf("=");
+      if (ei > 0 && ei+1 < contexts[ci].length()) {
+        values[ci] = Float.parseFloat(contexts[ci].substring(ei+1));
+        if (values[ci] < 0) {
+          return null;
+          //TODO: Throw corrpurt data exception
+        }
+        contexts[ci] = contexts[ci].substring(0,ei);
         hasRealValue = true;
       }
       else {
@@ -37,7 +42,7 @@ public class RealValueFileEventStream extends FileEventStream {
     if (!hasRealValue) {
       values = null;
     }
-    return (new Event(outcome, context, values));
+    return (new Event(outcome, contexts, values));
   }  
   
   /**
@@ -60,7 +65,7 @@ public class RealValueFileEventStream extends FileEventStream {
       iterations = Integer.parseInt(args[ai++]);
       cutoff = Integer.parseInt(args[ai++]);
     }
-    GISModel model = GIS.trainModel(es,iterations,cutoff);
+    GISModel model = GIS.trainModel(iterations,new OnePassRealValueDataIndexer(es,cutoff));
     new SuffixSensitiveGISModelWriter(model, new File(eventFile+".bin.gz")).persist();
   }
 }
