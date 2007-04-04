@@ -27,13 +27,22 @@ public class RealValueFileEventStream extends FileEventStream {
       contexts[ci] = st.nextToken();
       int ei = contexts[ci].lastIndexOf("=");
       if (ei > 0 && ei+1 < contexts[ci].length()) {
-        values[ci] = Float.parseFloat(contexts[ci].substring(ei+1));
-        if (values[ci] < 0) {
-          return null;
-          //TODO: Throw corrpurt data exception
+        boolean gotReal = true;
+        try {
+          values[ci] = Float.parseFloat(contexts[ci].substring(ei+1));
         }
-        contexts[ci] = contexts[ci].substring(0,ei);
-        hasRealValue = true;
+        catch (NumberFormatException e) {
+          gotReal = false;
+          System.err.println("Unable to determine value in context:"+contexts[ci]);
+          values[ci] = 1;
+        }
+        if (gotReal) {
+          if (values[ci] < 0) {
+            throw new RuntimeException("Negitive values are not allowed: "+contexts[ci]);
+          }
+          contexts[ci] = contexts[ci].substring(0,ei);
+          hasRealValue = true;
+        }
       }
       else {
         values[ci] = 1;
