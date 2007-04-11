@@ -51,11 +51,11 @@ public class TwoPassDataIndexer extends AbstractDataIndexer{
    * @param eventStream An Event[] which contains the a list of all the Events
    *               seen in the training data.
    */
-  public TwoPassDataIndexer(EventStream eventStream) {
+  public TwoPassDataIndexer(EventStream eventStream) throws IOException {
     this(eventStream, 0);
   }
 
-  public TwoPassDataIndexer(EventStream eventStream, int cutoff) {
+  public TwoPassDataIndexer(EventStream eventStream, int cutoff) throws IOException {
     this(eventStream,cutoff,null);
   }
   /**
@@ -66,7 +66,7 @@ public class TwoPassDataIndexer extends AbstractDataIndexer{
    * @param cutoff The minimum number of times a predicate must have been
    *               observed in order to be included in the model.
    */
-  public TwoPassDataIndexer(EventStream eventStream, int cutoff,String encoding) {
+  public TwoPassDataIndexer(EventStream eventStream, int cutoff,String encoding) throws IOException {
     TObjectIntHashMap predicateIndex;
     List eventsToCompare;
 
