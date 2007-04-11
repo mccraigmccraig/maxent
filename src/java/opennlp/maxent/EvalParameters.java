@@ -25,11 +25,7 @@ public class EvalParameters {
   double correctionParam;
   /** Log of 1/C; initial value of probabilities. */
   final double iprob;
-  
-  /** Stores the number of features that get fired for each outcome in an event. 
-   * This is over-written for each event evaluation, but declared once for efficiency.*/
-  int[] numfeats;
-  
+    
   /**
    * Creates a set of paramters which can be evaulated with the eval method.
    * @param params The parameters of the model.
@@ -41,7 +37,6 @@ public class EvalParameters {
     this.params = params;
     this.correctionParam = correctionParam;
     this.numOutcomes = numOutcomes;
-    this.numfeats = new int[numOutcomes];
     this.correctionConstant = correctionConstant;
     this.constantInverse = 1.0 / correctionConstant;
     this.iprob = Math.log(1.0/numOutcomes);

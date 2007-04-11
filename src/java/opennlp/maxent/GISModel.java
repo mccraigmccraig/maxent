@@ -27,7 +27,7 @@ import java.text.DecimalFormat;
  * Iterative Scaling procedure (implemented in GIS.java).
  *
  * @author      Tom Morton and Jason Baldridge
- * @version     $Revision: 1.20 $, $Date: 2007/03/21 19:04:37 $
+ * @version     $Revision: 1.21 $, $Date: 2007/04/11 15:58:26 $
  */
 public final class GISModel implements MaxentModel {
     /** Maping between predicates/contexts and an integer representing them. */
@@ -123,9 +123,7 @@ public final class GISModel implements MaxentModel {
      */
     public static double[] eval(int[] context, float[] values, double[] prior, EvalParameters model) {
       Context[] params = model.params;
-      for (int oid = 0; oid < model.numOutcomes; oid++) {
-        model.numfeats[oid] = 0;
-      }
+      int numfeats[] = new int[model.numOutcomes];
       int[] activeOutcomes;
       double[] activeParameters;
       double value = 1;
@@ -139,7 +137,7 @@ public final class GISModel implements MaxentModel {
           }
           for (int ai = 0; ai < activeOutcomes.length; ai++) {
             int oid = activeOutcomes[ai];
-            model.numfeats[oid]++;
+            numfeats[oid]++;
             prior[oid] += activeParameters[ai] * value;
           }
         }
@@ -148,7 +146,7 @@ public final class GISModel implements MaxentModel {
       double normal = 0.0;
       for (int oid = 0; oid < model.numOutcomes; oid++) {
         if (model.correctionParam != 0) {
-          prior[oid] = Math.exp(prior[oid]*model.constantInverse+((1.0 - ((double) model.numfeats[oid] / model.correctionConstant)) * model.correctionParam));
+          prior[oid] = Math.exp(prior[oid]*model.constantInverse+((1.0 - ((double) numfeats[oid] / model.correctionConstant)) * model.correctionParam));
         }
         else {
           prior[oid] = Math.exp(prior[oid]*model.constantInverse);
