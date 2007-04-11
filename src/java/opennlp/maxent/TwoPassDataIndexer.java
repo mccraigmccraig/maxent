@@ -20,6 +20,7 @@ package opennlp.maxent;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectIntHashMap;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
@@ -76,12 +77,12 @@ public class TwoPassDataIndexer extends AbstractDataIndexer{
     try {
       File tmp = File.createTempFile("events", null);
       tmp.deleteOnExit();
-      OutputStreamWriter osw;
+      Writer osw;
       if (encoding != null) {
-        osw = new OutputStreamWriter(new FileOutputStream(tmp),encoding);
+        osw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tmp),encoding));
       }
       else {
-        osw = new FileWriter(tmp);
+        osw = new BufferedWriter(new FileWriter(tmp));
       }
       int numEvents = computeEventCounts(eventStream, osw, predicateIndex, cutoff);
       System.out.println("done. " + numEvents + " events");
