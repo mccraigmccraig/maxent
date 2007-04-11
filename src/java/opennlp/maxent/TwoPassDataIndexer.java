@@ -23,7 +23,6 @@ import gnu.trove.TObjectIntHashMap;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -55,9 +54,6 @@ public class TwoPassDataIndexer extends AbstractDataIndexer{
     this(eventStream, 0);
   }
 
-  public TwoPassDataIndexer(EventStream eventStream, int cutoff) throws IOException {
-    this(eventStream,cutoff,null);
-  }
   /**
    * Two argument constructor for DataIndexer.
    *
@@ -66,7 +62,7 @@ public class TwoPassDataIndexer extends AbstractDataIndexer{
    * @param cutoff The minimum number of times a predicate must have been
    *               observed in order to be included in the model.
    */
-  public TwoPassDataIndexer(EventStream eventStream, int cutoff,String encoding) throws IOException {
+  public TwoPassDataIndexer(EventStream eventStream, int cutoff) throws IOException {
     TObjectIntHashMap predicateIndex;
     List eventsToCompare;
 
@@ -77,19 +73,13 @@ public class TwoPassDataIndexer extends AbstractDataIndexer{
     try {
       File tmp = File.createTempFile("events", null);
       tmp.deleteOnExit();
-      Writer osw;
-      if (encoding != null) {
-        osw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tmp),encoding));
-      }
-      else {
-        osw = new BufferedWriter(new FileWriter(tmp));
-      }
+      Writer osw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tmp),"UTF8"));
       int numEvents = computeEventCounts(eventStream, osw, predicateIndex, cutoff);
       System.out.println("done. " + numEvents + " events");
 
       System.out.print("\tIndexing...  ");
 
-      eventsToCompare = index(numEvents, new FileEventStream(tmp,encoding), predicateIndex);
+      eventsToCompare = index(numEvents, new FileEventStream(tmp), predicateIndex);
       // done with predicates
       predicateIndex = null;
       tmp.delete();

@@ -55,23 +55,14 @@ public class FileEventStream implements EventStream {
   public FileEventStream(String fileName) throws IOException {
     this(fileName,null);
   }
-  
-  public FileEventStream(File file) throws IOException {
-    this(file,null);
-  }
-  
+    
   /**
    * Creates a new file event stream from the specified file.
    * @param file the file containing the events.
    * @throws IOException When the specified file can not be read.
    */
-  public FileEventStream(File file, String encoding) throws IOException {
-    if (encoding == null) {
-      reader = new BufferedReader(new FileReader(file));
-    }
-    else {
-      reader = new BufferedReader(new InputStreamReader(new FileInputStream(file),encoding));
-    }
+  public FileEventStream(File file) throws IOException {
+    reader = new BufferedReader(new InputStreamReader(new FileInputStream(file),"UTF8"));
   }
   
   public boolean hasNext() {
