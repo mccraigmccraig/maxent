@@ -37,7 +37,7 @@ package opennlp.maxent;
  *    
  * @author Tom Morton
  * @author  Jason Baldridge
- * @version $Revision: 1.26 $, $Date: 2007/03/21 19:04:37 $
+ * @version $Revision: 1.27 $, $Date: 2007/04/12 17:21:59 $
  */
 class GISTrainer {
 
@@ -127,7 +127,6 @@ class GISTrainer {
   /** Stores the number of features that get fired per event. */
   int[] numfeats;
   /** Initial probability for all outcomes. */
-  double iprob;
   
   EvalParameters evalParams;
   /**
@@ -232,7 +231,6 @@ class GISTrainer {
     outcomeLabels = di.getOutcomeLabels();
     outcomeList = di.getOutcomeList();
     numOutcomes = outcomeLabels.length;
-    iprob = Math.log(1.0 / numOutcomes);
 
     predLabels = di.getPredLabels();
     prior.setLabels(outcomeLabels,predLabels);
