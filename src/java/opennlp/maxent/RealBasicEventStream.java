@@ -37,37 +37,10 @@ public class RealBasicEventStream implements EventStream {
     if (lastSpace == -1) 
       return null;
     else {
-      String[] contexts = obs.substring(lastSpace+1).split("\\s+");
-      float[] values = new float[contexts.length];
-      boolean hasRealValue = false;
-      for (int ci=0;ci<contexts.length;ci++) {
-        int ei = contexts[ci].lastIndexOf("=");
-        if (ei > 0 && ei+1 < contexts[ci].length()) {
-          values[ci] = Float.parseFloat(contexts[ci].substring(ei+1));
-          if (values[ci] < 0) {
-            // TODO: Throw corrpurt data exception
-            return null;
-          }
-          contexts[ci] = contexts[ci].substring(0,ei);
-          hasRealValue = true;
-        }
-        else {
-          values[ci] = 1;
-        }
-      }
-      if (!hasRealValue) {
-        values = null;
-      }
+      String[] contexts = obs.substring(0,lastSpace).split("\\s+");
+      float[] values = RealValueFileEventStream.parseContexts(contexts);
       return new Event(obs.substring(lastSpace+1),contexts,values);
     }
-  }
-
-  /**
-   * @param args
-   */
-  public static void main(String[] args) {
-    // TODO Auto-generated method stub
-
   }
 
 }
