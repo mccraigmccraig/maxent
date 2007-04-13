@@ -22,7 +22,7 @@ package opennlp.maxent;
  * GISModels.
  *
  * @author  Jason Baldridge
- * @version $Revision: 1.8 $, $Date: 2006/11/15 21:42:04 $
+ * @version $Revision: 1.9 $, $Date: 2007/04/13 16:13:35 $
  */
 public class GIS {
     /**
@@ -115,7 +115,7 @@ public class GIS {
      *         to disk using an opennlp.maxent.io.GISModelWriter object.
      */
     public static GISModel trainModel(int iterations, DataIndexer indexer, boolean smoothing) {
-      return trainModel(iterations,indexer,false,smoothing,null,0);
+      return trainModel(iterations,indexer,true,smoothing,null,0);
     }
     
     /**
