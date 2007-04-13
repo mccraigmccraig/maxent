@@ -1,3 +1,19 @@
+2.5.0
+-----
+Added support for real-valued features with RealBasicEventStream, 
+RealValueFileEventStream, OnePassRealValueDataIndexer, and
+TwoPassRealValueDataIndexer classes.
+
+Added support for priors with the Prior interface.  By default the
+package has been using a uniform prior when no other information is
+known, now you can create other priors.
+
+Set TwoPassDataIndexer to use UTF8 encoding.
+
+Made GISModel thread safe for calls to the eval() method.
+
+Refactored GISModel and GISTrainer to use common eval() method.
+
 2.4.0
 -----
 Updated parameter datatype to re-use data structure storing which outcomes
