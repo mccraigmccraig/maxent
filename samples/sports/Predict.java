@@ -24,7 +24,7 @@ import java.io.*;
  * Test the model on some input.
  *
  * @author  Jason Baldridge
- * @version $Revision: 1.2 $, $Date: 2001/11/20 17:07:17 $
+ * @version $Revision: 1.3 $, $Date: 2007/04/13 16:24:06 $
  */
 public class Predict {
     MaxentModel _model;
@@ -35,10 +35,25 @@ public class Predict {
     }
     
     private void eval (String predicates) {
-	double[] ocs = _model.eval(_cg.getContext(predicates));
-	System.out.println("For context: " + predicates
-			   + "\n" + _model.getAllOutcomes(ocs) + "\n");
+      eval(predicates,false);
+    }
+    
+    private void eval (String predicates, boolean real) {
+      String[] contexts = predicates.split(" ");
+      double[] ocs;
+      if (!real) {
+        ocs = _model.eval(contexts);
+      }
+      else {
+        float[] values = RealValueFileEventStream.parseContexts(contexts);
+        ocs = _model.eval(contexts,values);
+      }
+      System.out.println("For context: " + predicates+ "\n" + _model.getAllOutcomes(ocs) + "\n");
 	
+    }
+    
+    private static void usage() {
+      
     }
 
     /**
@@ -48,14 +63,25 @@ public class Predict {
      */
     public static void main(String[] args) {
 	String dataFileName, modelFileName;
+    boolean real = false;
+    int ai = 0;
 	if (args.length > 0) {
-	    dataFileName = args[0];
-	    if (args.length > 1) 
-		modelFileName = args[1];
-	    else
-		modelFileName =
-		    dataFileName.substring(0,dataFileName.lastIndexOf('.'))
-		    + "Model.txt";
+      while (args[ai].startsWith("-")) {
+        if (args[ai].equals("-real")) {
+          real = true;
+        }
+        else {
+          usage();
+        }
+        ai++;
+      }      
+      dataFileName = args[ai++];
+      if (args.length > ai) { 
+        modelFileName = args[ai++];
+      }
+      else {
+          modelFileName = dataFileName.substring(0,dataFileName.lastIndexOf('.')) + "Model.txt";
+      }
 	}
 	else {
 	    dataFileName = "";
@@ -81,19 +107,18 @@ public class Predict {
 	    try {
 		DataStream ds =
 		    new PlainTextByLineDataStream(
-			new FileReader(new File(args[0])));
+			new FileReader(new File(dataFileName)));
 
 		while (ds.hasNext()) {
 		    String s = (String)ds.nextToken();
-		    predictor.eval(s.substring(0, s.lastIndexOf(' ')));
+		    predictor.eval(s.substring(0, s.lastIndexOf(' ')),real);
 		}
 		return;
 	    }
 	    catch (Exception e) {
-		System.out.println("Unable to read from specified file: "
-				   + args[0]);
-		System.out.println();
-	
+	      System.out.println("Unable to read from specified file: "+modelFileName);
+	      System.out.println();
+	      e.printStackTrace();
 	    }
 	}
     }
