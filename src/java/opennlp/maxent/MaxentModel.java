@@ -21,7 +21,7 @@ package opennlp.maxent;
  * Interface for maximum entropy models.
  *
  * @author      Jason Baldridge
- * @version     $Revision: 1.4 $, $Date: 2003/12/09 23:13:53 $
+ * @version     $Revision: 1.5 $, $Date: 2007/04/13 16:14:07 $
  **/
 public interface MaxentModel {
 
@@ -43,10 +43,18 @@ public interface MaxentModel {
      *                which are to be evaluated together.
      * @param probs An array which is populated with the probabilities for each of the different
      *         outcomes, all of which sum to 1.
-     * @return an array of the probabilities for each of the different
-     *         outcomes, all of which sum to 1.  The <code>probs</code> is returned if it is appropiately sized. 
+     * @return an array of the probabilities for each of the different outcomes, all of which sum to 1. 
      **/
   public double[] eval(String[] context, double probs[]);
+  
+  /**
+   * Evaluates a contexts with the specified context values.
+   * @param context A list of String names of the contextual predicates
+     *                which are to be evaluated together.
+   * @param values The values associated with each context.
+   * @return an array of the probabilities for each of the different outcomes, all of which sum to 1.
+   */
+  public double[] eval(String[] context, float[] values);
 
   /**
    * Simple function to return the outcome associated with the index
