@@ -16,15 +16,17 @@ public class RealValueFileEventStream extends FileEventStream {
     super(file);
   }
   
-  public Event nextEvent() {
-    StringTokenizer st = new StringTokenizer(line);
-    String outcome = st.nextToken();
-    int count = st.countTokens();
-    String[] contexts = new String[count];
-    float[] values = new float[count];
+  /**
+   * Parses the specified contexts and re-populates context array with features and returns the values
+   * for these features.
+   * If all values are unspecified, then null is returned.
+   * @param contexts The contexts with real values specified.
+   * @return The value for each context or null if all values are unspecified.
+   */
+  public static float[] parseContexts(String[] contexts) {
     boolean hasRealValue = false;
-    for (int ci = 0; ci < count; ci++) {
-      contexts[ci] = st.nextToken();
+    float[] values = new float[contexts.length]; 
+    for (int ci = 0; ci < contexts.length; ci++) {
       int ei = contexts[ci].lastIndexOf("=");
       if (ei > 0 && ei+1 < contexts[ci].length()) {
         boolean gotReal = true;
@@ -51,6 +53,14 @@ public class RealValueFileEventStream extends FileEventStream {
     if (!hasRealValue) {
       values = null;
     }
+    return values;
+  }
+    
+  public Event nextEvent() {
+    int si = line.indexOf(' ');
+    String outcome = line.substring(0,si);
+    String[] contexts = line.substring(si+1).split(" ");
+    float[] values = parseContexts(contexts);
     return (new Event(outcome, contexts, values));
   }  
   
