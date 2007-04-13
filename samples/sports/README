@@ -90,10 +90,9 @@ Also, try this on the test files:
 
 Go ahead and modify the data to experiment with how the results can
 vary depending on the input to training.  There isn't much data, so
-its not a full-fledge example of maxent, but it should still give the
+its not a full-fledged example of maxent, but it should still give the
 general idea.  Also, add more contexts in the test files to see what
 the model will produce with different features active.
-
 
 In all the previous examples, the features we're binary values, meaning
 that the feature was either on or off.  You can also use features which
@@ -106,11 +105,42 @@ away pdiff=0.6875 ptwins=0.6666 lose
 home pdiff=1.0625 ptwins=0.3333 win
 
 Features which don't contains are not in this format are considered to 
-have a value of 1.  Note feature values MUST BE POSITIVE.
+have a value of 1.  Note feature values MUST BE POSITIVE.  Using real-valued 
+features has some additional overhead so you'll need to let the model know
+that it should look for these features.  For these examples, you can use
+the "-real" option.
 
+> java CreateModel -real realTeam.dat
 
+The model will converge in 15 iterations.
 
-On a side note, though the features appear in almost the same
+You can then test the models on the test data:
+
+> java Predict -real realTeam.test
+
+You see output like:
+--------------------------------------------------
+For context: home pdiff=0.6875 ptwins=0.5
+lose[0.3279]  win[0.4311]  tie[0.2410]
+
+For context: home pdiff=1.0625 ptwins=0.5
+lose[0.3414]  win[0.4301]  tie[0.2284]
+
+For context: away pdiff=0.8125 ptwins=0.5
+lose[0.5590]  win[0.1864]  tie[0.2546]
+
+For context: away pdiff=0.6875 ptwins=0.6
+lose[0.5578]  win[0.1866]  tie[0.2556]
+--------------------------------------------------
+
+You can see that the values of the features as well as their presence or 
+absence (such as the home or away features) impact the probabilities assigned 
+to each outcome.
+
+The use of the "-real" option to indicate real-valued data.  In general you'll
+need to use the classes: RealBasicEventStream, RealValueFileEventStream, OnePassRealValueDataIndexer, and TwoPassRealValueDataIndexer.
+
+For all models, though the features appear in almost the same
 orderings in the data files, this is not important. You can list them
 in whatever order you like.
 
@@ -118,8 +148,5 @@ If you have any suggestions, interesting modifications, or data sets
 for other examples to add to this sample maxent application, please
 post them to the maxent open discussion forum:
 
-  https://sourceforge.net/forum/forum.php?forum_id=18384
-
-or send mail to Tom Morton <tsmorton@users.sourceforge.net>.  Posting to the
-forum is preferable.
+  http://sourceforge.net/forum/forum.php?forum_id=18384
 
