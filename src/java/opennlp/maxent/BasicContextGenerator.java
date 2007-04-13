@@ -29,26 +29,17 @@ import java.util.*;
  * </p>
  * 
  * @author      Jason Baldridge
- * @version     $Revision: 1.3 $, $Date: 2004/05/10 03:11:54 $
+ * @version     $Revision: 1.4 $, $Date: 2007/04/13 16:12:28 $
  */
 public class BasicContextGenerator implements ContextGenerator {
 
-    /**
-     * Builds up the list of contextual predicates given a String.
-     */
-    public String[] getContext(Object o) {
-	String s = (String)o;
-	int prevIndex = -1;
-	int index = s.indexOf(' ');
-	List cuts = new ArrayList();
-	while (index != -1) {
-	    cuts.add(s.substring(prevIndex+1, index));
-	    prevIndex = index;
-	    index = s.indexOf(' ', ++index);
-	}
-	cuts.add(s.substring(prevIndex+1, s.length()));
-	return (String[])cuts.toArray(new String[cuts.size()]);
-    }
+  /**
+   * Builds up the list of contextual predicates given a String.
+   */
+  public String[] getContext(Object o) {
+    String s = (String) o;
+    return (String[]) s.split(" ");
+  }
  
 }
 
