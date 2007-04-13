@@ -24,7 +24,7 @@ import java.util.*;
  * predicates indexes contained in the events.
  *
  * @author      Jason Baldridge
- * @version $Revision: 1.4 $, $Date: 2007/03/21 19:04:37 $
+ * @version $Revision: 1.5 $, $Date: 2007/04/13 16:13:00 $
  */
 public class ComparableEvent implements Comparable {
     public int outcome;
@@ -75,9 +75,14 @@ public class ComparableEvent implements Comparable {
     }
 
     public String toString() {
-        String s = "";
-        for (int i=0; i<predIndexes.length; i++) s+= " "+predIndexes[i];
-        return s;
+        StringBuffer s = new StringBuffer().append(outcome).append(":");
+        for (int i=0; i<predIndexes.length; i++) {
+          s.append(" ").append(predIndexes[i]);
+          if (values != null) {
+            s.append("=").append(values[i]);
+          }
+        }
+        return s.toString();
     }
     
     private void sort(int[] pids, float[] values) {
