@@ -37,7 +37,7 @@ package opennlp.maxent;
  *    
  * @author Tom Morton
  * @author  Jason Baldridge
- * @version $Revision: 1.27 $, $Date: 2007/04/12 17:21:59 $
+ * @version $Revision: 1.28 $, $Date: 2008/08/22 01:16:50 $
  */
 class GISTrainer {
 
@@ -72,11 +72,9 @@ class GISTrainer {
   /** Records the array of predicates seen in each event. */
   private int[][] contexts;
   
-  /** The value associates with each context. If null then context values are assumes to be 1. */
+  /** The value associated with each context. If null then context values are assumes to be 1. */
   private float[][] values;
-
-  /** Records the array of outcomes seen in each event. */
-  private int[] outcomes;
+  
   /** List of outcomes for each event i, in context[i]. */
   private int[] outcomeList;
 
@@ -211,7 +209,6 @@ class GISTrainer {
     display("Incorporating indexed data for training...  \n");
     contexts = di.getContexts();
     values = di.getValues();
-    outcomes = di.getOutcomeList();
     this.cutoff = cutoff;
     predicateCounts = di.getPredCounts();
     numTimesEventsSeen = di.getNumTimesEventsSeen();
@@ -241,10 +238,15 @@ class GISTrainer {
     display("\t  Number of Predicates: " + numPreds + "\n");
 
     // set up feature arrays
-    int[][] predCount = new int[numPreds][numOutcomes];
+    float[][] predCount = new float[numPreds][numOutcomes];
     for (int ti = 0; ti < numUniqueEvents; ti++) {
       for (int j = 0; j < contexts[ti].length; j++) {
-        predCount[contexts[ti][j]][outcomeList[ti]] += numTimesEventsSeen[ti];
+        if (values == null || values[ti] == null) {
+          predCount[contexts[ti][j]][outcomeList[ti]] += numTimesEventsSeen[ti];
+        }
+        else {
+          predCount[contexts[ti][j]][outcomeList[ti]] += numTimesEventsSeen[ti]*values[ti][j];
+        }
       }
     }
 
@@ -303,7 +305,7 @@ class GISTrainer {
         params[pi].setParameter(aoi, 0.0);
         modelExpects[pi].setParameter(aoi, 0.0);
         if (predCount[pi][oi] > 0) {
-          observedExpects[pi].setParameter(aoi, predCount[pi][oi]);
+            observedExpects[pi].setParameter(aoi, predCount[pi][oi]);
         }
         else if (useSimpleSmoothing) { 
           observedExpects[pi].setParameter(aoi,smoothingObservation);
@@ -317,7 +319,7 @@ class GISTrainer {
       for (int ti = 0; ti < numUniqueEvents; ti++) {
         for (int j = 0; j < contexts[ti].length; j++) {
           int pi = contexts[ti][j];
-          if (!modelExpects[pi].contains(outcomes[ti])) {
+          if (!modelExpects[pi].contains(outcomeList[ti])) {
             cfvalSum += numTimesEventsSeen[ti];
           }
         }
@@ -442,7 +444,7 @@ class GISTrainer {
       if (useSlackParameter)
         CFMOD += (evalParams.correctionConstant - contexts[ei].length) * numTimesEventsSeen[ei];
       
-      loglikelihood += Math.log(modelDistribution[outcomes[ei]]) * numTimesEventsSeen[ei];
+      loglikelihood += Math.log(modelDistribution[outcomeList[ei]]) * numTimesEventsSeen[ei];
       numEvents += numTimesEventsSeen[ei];
       if (printMessages) {
         int max = 0;
@@ -451,7 +453,7 @@ class GISTrainer {
             max = oi;
           }
         }
-        if (max == outcomes[ei]) {
+        if (max == outcomeList[ei]) {
           numCorrect += numTimesEventsSeen[ei];
         }
       }
