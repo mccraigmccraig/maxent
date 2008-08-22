@@ -30,7 +30,7 @@ import java.util.zip.*;
  *    <li>.bin --> the file is binary
  *
  * @author      Jason Baldridge
- * @version     $Revision: 1.2 $, $Date: 2004/05/10 03:11:54 $
+ * @version     $Revision: 1.3 $, $Date: 2008/08/22 01:17:04 $
  */
 public class SuffixSensitiveGISModelReader extends GISModelReader {
     private final GISModelReader suffixAppropriateReader;
@@ -109,9 +109,16 @@ public class SuffixSensitiveGISModelReader extends GISModelReader {
      * be able to inspect a few of them as plain text files.
      */
     public static void main(String[] args) throws IOException {
-	opennlp.maxent.GISModel m =
-	    new SuffixSensitiveGISModelReader(new File(args[0])).getModel();
-	new SuffixSensitiveGISModelWriter(m, new File(args[1])).persist();
+      if (args.length == 2) {
+        opennlp.maxent.GISModel m =
+          new SuffixSensitiveGISModelReader(new File(args[0])).getModel();
+        new SuffixSensitiveGISModelWriter(m, new File(args[1])).persist();
+      }
+      else {
+        System.err.println("Usage: SuffixSensitiveGISModelReader model1 mode2");
+        System.err.println("Load model1 and converts it into the model file format specified by the model2 name.");
+        
+      }
     }
 
 }
