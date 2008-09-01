@@ -24,7 +24,7 @@ import java.util.*;
  * predicates indexes contained in the events.
  *
  * @author      Jason Baldridge
- * @version $Revision: 1.5 $, $Date: 2007/04/13 16:13:00 $
+ * @version $Revision: 1.6 $, $Date: 2008/09/01 18:03:21 $
  */
 public class ComparableEvent implements Comparable {
     public int outcome;
@@ -61,9 +61,17 @@ public class ComparableEvent implements Comparable {
         for (int i=0; i<smallerLength; i++) {
             if (predIndexes[i] < ce.predIndexes[i]) return -1;
             else if (predIndexes[i] > ce.predIndexes[i]) return 1;
-            if (values != null) {
+            if (values != null && ce.values != null) {
               if (values[i] < ce.values[i]) return -1;
               else if (values[i] > ce.values[i]) return 1;
+            }
+            else if (values != null) {
+              if (values[i] < 1)  return -1;
+              else if (values[i] > 1) return 1;
+            }
+            else if (ce.values != null) {
+              if (1 < ce.values[i]) return -1;
+              else if (1 > ce.values[i]) return 1;
             }
         }
 
