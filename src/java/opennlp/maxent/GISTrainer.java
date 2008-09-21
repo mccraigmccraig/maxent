@@ -37,7 +37,7 @@ package opennlp.maxent;
  *    
  * @author Tom Morton
  * @author  Jason Baldridge
- * @version $Revision: 1.28 $, $Date: 2008/08/22 01:16:50 $
+ * @version $Revision: 1.29 $, $Date: 2008/09/21 03:20:15 $
  */
 class GISTrainer {
 
@@ -217,10 +217,22 @@ class GISTrainer {
     //printTable(contexts);
 
     // determine the correction constant and its inverse
-    int correctionConstant = contexts[0].length;
-    for (int ci = 1; ci < contexts.length; ci++) {
-      if (contexts[ci].length > correctionConstant) {
-        correctionConstant = contexts[ci].length;
+    int correctionConstant = 1;
+    for (int ci = 0; ci < contexts.length; ci++) {
+      if (values == null || values[ci] == null) {
+        if (contexts[ci].length > correctionConstant) {
+          correctionConstant = contexts[ci].length;
+        }
+      }
+      else {
+        float cl = values[ci][0];
+        for (int vi=1;vi<values[ci].length;vi++) {
+          cl+=values[ci][vi];
+        }
+        
+        if (cl > correctionConstant) {
+          correctionConstant=(int) Math.ceil(cl);
+        }
       }
     }
     display("done.\n");
@@ -241,11 +253,11 @@ class GISTrainer {
     float[][] predCount = new float[numPreds][numOutcomes];
     for (int ti = 0; ti < numUniqueEvents; ti++) {
       for (int j = 0; j < contexts[ti].length; j++) {
-        if (values == null || values[ti] == null) {
-          predCount[contexts[ti][j]][outcomeList[ti]] += numTimesEventsSeen[ti];
-        }
-        else {
+        if (values != null && values[ti] != null) {
           predCount[contexts[ti][j]][outcomeList[ti]] += numTimesEventsSeen[ti]*values[ti][j];
+        }
+        else {          
+          predCount[contexts[ti][j]][outcomeList[ti]] += numTimesEventsSeen[ti];
         }
       }
     }
@@ -430,7 +442,12 @@ class GISTrainer {
           int[] activeOutcomes = modelExpects[pi].getOutcomes();
           for (int aoi=0;aoi<activeOutcomes.length;aoi++) {
             int oi = activeOutcomes[aoi];
-            modelExpects[pi].updateParameter(aoi,modelDistribution[oi] * numTimesEventsSeen[ei]);
+            if (values != null && values[ei] != null) {
+              modelExpects[pi].updateParameter(aoi,modelDistribution[oi] * values[ei][j] * numTimesEventsSeen[ei]);
+            }
+            else {
+              modelExpects[pi].updateParameter(aoi,modelDistribution[oi] * numTimesEventsSeen[ei]);
+            }
           }
           if (useSlackParameter) {
             for (int oi = 0; oi < numOutcomes; oi++) {

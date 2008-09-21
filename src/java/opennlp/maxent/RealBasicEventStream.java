@@ -43,4 +43,10 @@ public class RealBasicEventStream implements EventStream {
     }
   }
 
+  public static void main(String[] args) throws java.io.IOException {
+    EventStream es = new RealBasicEventStream(new PlainTextByLineDataStream(new java.io.FileReader(args[0])));
+    while (es.hasNext()) {
+      System.out.println(es.nextEvent());
+    }
+  }
 }

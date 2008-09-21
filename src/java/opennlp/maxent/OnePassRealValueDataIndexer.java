@@ -42,7 +42,7 @@ public class OnePassRealValueDataIndexer extends OnePassDataIndexer {
       if (null == evt) {
         continue; // this was a dupe, skip over it.
       }
-      values[j] = evt.values;
+      values[j++] = evt.values;
     }
     return numUniqueEvents;
   }
