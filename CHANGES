@@ -1,3 +1,8 @@
+2.5.1
+-----
+Fixed bugs with real-valued feature support.
+Added unit tests for these bugs.
+
 2.5.0
 -----
 Added support for real-valued features with RealBasicEventStream, 
