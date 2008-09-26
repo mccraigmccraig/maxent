@@ -112,8 +112,6 @@ the "-real" option.
 
 > java CreateModel -real realTeam.dat
 
-The model will converge in 15 iterations.
-
 You can then test the models on the test data:
 
 > java Predict -real realTeam.test
