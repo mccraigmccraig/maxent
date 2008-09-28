@@ -15,37 +15,33 @@
  * limitations under the License.
  */
 
-
-package opennlp.maxent;
-
-import java.io.*;
-import java.util.zip.*;
+package opennlp.model;
 
 /**
- * A program to convert from java binary doubles to ascii
+ * A wrapper to turn EventCollectors created for Maxent 1.0 into EventStreams
+ * for Maxent 1.2.  For efficiency, it would be best to convert your
+ * EventCollector into a EventStream directly, but this will allow your
+ * application to work with Maxent 1.2 with very little recoding.
  *
- * @author      Jason Baldridge and Gann Bierner
- * @version     $Revision: 1.2 $, $Date: 2008/09/28 18:02:59 $
+ * @author      Jason Baldridge
+ * @version     $Revision$, $Date$
  */
-
-public class BinToAscii {
-
-	public static void main(String[] args) throws IOException {
-		PrintWriter out =
-			new PrintWriter(new OutputStreamWriter(
-				new GZIPOutputStream(
-					new FileOutputStream(args[1]))));
-		DataInputStream in =
-			new DataInputStream(new GZIPInputStream(
-				new FileInputStream(args[0])));
-
-		double d;
-		try {
-			while(true)
-				out.println(in.readDouble());
-		} catch (Exception E) {}
-		out.close();
-		in.close();
-	}
-
+public final class EventCollectorAsStream implements EventStream {
+    final Event[] events;
+    final int numEvents;
+    int index = 0;
+    
+    public EventCollectorAsStream (EventCollector ec) {
+	events = ec.getEvents(false);
+	numEvents = events.length;
+    }
+    
+    public Event nextEvent () {
+	return events[index++];
+    }
+    
+    public boolean hasNext () {
+	return (index < numEvents);
+    }
+ 
 }

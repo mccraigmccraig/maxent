@@ -1,32 +1,32 @@
-///////////////////////////////////////////////////////////////////////////////
-// Copyright (C) 2001 Jason Baldridge and Gann Bierner
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or (at your option) any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-//////////////////////////////////////////////////////////////////////////////   
-package opennlp.maxent;
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreemnets.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0 
+ * (the "License"); you may not use this file except in compliance with 
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-import gnu.trove.TIntArrayList;
-import gnu.trove.TLinkedList;
-import gnu.trove.TObjectIntHashMap;
+package opennlp.model;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+
 
 /**
  * An indexer for maxent model data which handles cutoffs for uncommon
@@ -34,7 +34,7 @@ import java.util.Set;
  * predicates. 
  *
  * @author      Jason Baldridge
- * @version $Revision: 1.5 $, $Date: 2007/03/15 04:51:26 $
+ * @version $Revision$, $Date$
  */
 public class OnePassDataIndexer extends AbstractDataIndexer  {
 
@@ -49,6 +49,9 @@ public class OnePassDataIndexer extends AbstractDataIndexer  {
         this(eventStream, 0);
     }
 
+    public OnePassDataIndexer(EventStream eventStream, int cutoff) {
+      this(eventStream,cutoff,true);
+    }
     /**
      * Two argument constructor for DataIndexer.
      *
@@ -57,12 +60,11 @@ public class OnePassDataIndexer extends AbstractDataIndexer  {
      * @param cutoff The minimum number of times a predicate must have been
      *               observed in order to be included in the model.
      */
-    public OnePassDataIndexer(EventStream eventStream, int cutoff) {
-        TObjectIntHashMap predicateIndex;
-        TLinkedList events;
+    public OnePassDataIndexer(EventStream eventStream, int cutoff, boolean sort) {
+        Map<String,Integer> predicateIndex = new HashMap<String,Integer>();
+        LinkedList<Event> events;
         List eventsToCompare;
 
-        predicateIndex = new TObjectIntHashMap();
         System.out.println("Indexing events using cutoff of " + cutoff + "\n");
 
         System.out.print("\tComputing event counts...  ");
@@ -79,7 +81,7 @@ public class OnePassDataIndexer extends AbstractDataIndexer  {
         System.out.println("done.");
 
         System.out.print("Sorting and merging events... ");
-        sortAndMerge(eventsToCompare);
+        sortAndMerge(eventsToCompare,sort);
         System.out.println("Done indexing.");
     }
 
@@ -96,12 +98,11 @@ public class OnePassDataIndexer extends AbstractDataIndexer  {
      * @param cutoff an <code>int</code> value
      * @return a <code>TLinkedList</code> value
      */
-    private TLinkedList computeEventCounts(EventStream eventStream,
-        TObjectIntHashMap predicatesInOut,
+    private LinkedList<Event> computeEventCounts(EventStream eventStream,Map<String,Integer> predicatesInOut,
         int cutoff) {
       Set predicateSet = new HashSet();
-      TObjectIntHashMap counter = new TObjectIntHashMap();
-      TLinkedList events = new TLinkedList();
+      Map<String,Integer> counter = new HashMap<String,Integer>();
+      LinkedList<Event> events = new LinkedList<Event>();
       while (eventStream.hasNext()) {
         Event ev = eventStream.nextEvent();
         events.addLast(ev);
@@ -117,14 +118,13 @@ public class OnePassDataIndexer extends AbstractDataIndexer  {
       return events;
     }
 
-    protected List index(TLinkedList events,
-                       TObjectIntHashMap predicateIndex) {
-        TObjectIntHashMap omap = new TObjectIntHashMap();
+    protected List index(LinkedList<Event> events, Map<String,Integer> predicateIndex) {
+        Map<String,Integer> omap = new HashMap<String,Integer>();
 
         int numEvents = events.size();
         int outcomeCount = 0;
         List eventsToCompare = new ArrayList(numEvents);
-        TIntArrayList indexedContext = new TIntArrayList();
+        List<Integer> indexedContext = new ArrayList<Integer>();
 
         for (int eventIndex=0; eventIndex<numEvents; eventIndex++) {
             Event ev = (Event)events.removeFirst();
@@ -150,14 +150,18 @@ public class OnePassDataIndexer extends AbstractDataIndexer  {
 
             // drop events with no active features
             if (indexedContext.size() > 0) {
-                ce = new ComparableEvent(ocID, indexedContext.toNativeArray());
+                int[] cons = new int[indexedContext.size()];
+                for (int ci=0;ci<cons.length;ci++) {
+                  cons[ci] = indexedContext.get(ci);
+                }
+                ce = new ComparableEvent(ocID, cons);
                 eventsToCompare.add(ce);
             }
             else {
               System.err.println("Dropped event "+ev.getOutcome()+":"+Arrays.asList(ev.getContext()));
             }
             // recycle the TIntArrayList
-            indexedContext.resetQuick();
+            indexedContext.clear();
         }
         outcomeLabels = toIndexedStringArray(omap);
         predLabels = toIndexedStringArray(predicateIndex);

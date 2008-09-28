@@ -15,32 +15,34 @@
  * limitations under the License.
  */
 
-package opennlp.maxent;
+package opennlp.model;
+
+
 
 /**
- * A interface for objects which can deliver a stream of training data to be
- * supplied to an EventStream. It is not necessary to use a DataStream in a
- * Maxent application, but it can be used to support a wider variety of formats
- * in which your training data can be held.
+ * An interface for objects which read events during training.
  *
  * @author      Jason Baldridge
- * @version     $Revision: 1.2 $, $Date: 2008/09/28 18:03:16 $
+ * @version $Revision$, $Date$
  */
-public interface DataStream {
+public interface EventCollector {
 
     /**
-     * Returns the next slice of data held in this DataStream.
+     * Return the events which this EventCollector has gathered.  It must get
+     * its data from a constructor.
      *
-     * @return the Object representing the data which is next in this
-     *         DataStream
+     * @return the events that this EventCollector has gathered
      */
-    public Object nextToken ();
+    public Event[] getEvents();
 
     /**
-     * Test whether there are any Events remaining in this EventStream.
-     *
-     * @return true if this DataStream has more data tokens
+     * Return the events which this EventCollector has gathered based on
+     * whether we wish to train a model or evaluate one based on those
+     * events.
+     * 
+     * @param evalMode true if we are evaluating based on the events, false if
+     *                 we are training.
+     * @return the events that this EventCollector has gathered
      */
-    public boolean hasNext ();
+    public Event[] getEvents(boolean evalMode);
 }
-

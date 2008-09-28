@@ -2,6 +2,10 @@ package opennlp.maxent;
 
 import java.io.IOException;
 
+import opennlp.model.FileEventStream;
+import opennlp.model.OnePassRealValueDataIndexer;
+import opennlp.model.RealValueFileEventStream;
+
 import junit.framework.TestCase;
 
 public class RealValueModelTests extends TestCase {

@@ -15,37 +15,30 @@
  * limitations under the License.
  */
 
-
-package opennlp.maxent;
-
-import java.io.*;
-import java.util.zip.*;
+package opennlp.model;
 
 /**
- * A program to convert from java binary doubles to ascii
+ * Provide a maximum entropy model with a uniform prior.
+ * @author Tom Morton
  *
- * @author      Jason Baldridge and Gann Bierner
- * @version     $Revision: 1.2 $, $Date: 2008/09/28 18:02:59 $
  */
+public class UniformPrior implements Prior {
 
-public class BinToAscii {
+  private int numOutcomes;
+  private double r;
+    
+  public void logPrior(double[] dist, int[] context, float[] values) {
+    for (int oi=0;oi<numOutcomes;oi++) {
+      dist[oi] = r;
+    }
+  }
+  
+  public void logPrior(double[] dist, int[] context) {
+    logPrior(dist,context,null);
+  }
 
-	public static void main(String[] args) throws IOException {
-		PrintWriter out =
-			new PrintWriter(new OutputStreamWriter(
-				new GZIPOutputStream(
-					new FileOutputStream(args[1]))));
-		DataInputStream in =
-			new DataInputStream(new GZIPInputStream(
-				new FileInputStream(args[0])));
-
-		double d;
-		try {
-			while(true)
-				out.println(in.readDouble());
-		} catch (Exception E) {}
-		out.close();
-		in.close();
-	}
-
+  public void setLabels(String[] outcomeLabels, String[] contextLabels) {
+    this.numOutcomes = outcomeLabels.length;
+    r = Math.log(1.0/numOutcomes);
+  }
 }

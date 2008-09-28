@@ -3,8 +3,8 @@ package opennlp.maxent.io;
 import java.io.IOException;
 
 import junit.framework.TestCase;
-import opennlp.maxent.OnePassRealValueDataIndexer;
-import opennlp.maxent.RealValueFileEventStream;
+import opennlp.model.OnePassRealValueDataIndexer;
+import opennlp.model.RealValueFileEventStream;
 
 public class RealValueFileEventStreamTests extends TestCase {
 

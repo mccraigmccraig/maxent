@@ -15,37 +15,33 @@
  * limitations under the License.
  */
 
-
-package opennlp.maxent;
-
-import java.io.*;
-import java.util.zip.*;
+package opennlp.model;
 
 /**
- * A program to convert from java binary doubles to ascii
+ * A object which can deliver a stream of training events for the GIS
+ * procedure (or others such as IIS if and when they are implemented).
+ * EventStreams don't need to use opennlp.maxent.DataStreams, but doing so
+ * would provide greater flexibility for producing events from data stored in
+ * different formats.
  *
- * @author      Jason Baldridge and Gann Bierner
- * @version     $Revision: 1.2 $, $Date: 2008/09/28 18:02:59 $
+ * @author      Jason Baldridge
+ * @version     $Revision$, $Date$
+ *
  */
+public interface EventStream {
 
-public class BinToAscii {
-
-	public static void main(String[] args) throws IOException {
-		PrintWriter out =
-			new PrintWriter(new OutputStreamWriter(
-				new GZIPOutputStream(
-					new FileOutputStream(args[1]))));
-		DataInputStream in =
-			new DataInputStream(new GZIPInputStream(
-				new FileInputStream(args[0])));
-
-		double d;
-		try {
-			while(true)
-				out.println(in.readDouble());
-		} catch (Exception E) {}
-		out.close();
-		in.close();
-	}
-
+    /**
+     * Returns the next Event object held in this EventStream.
+     *
+     * @return the Event object which is next in this EventStream
+     */
+    public Event nextEvent ();
+ 
+    /**
+     * Test whether there are any Events remaining in this EventStream.
+     *
+     * @return true if this EventStream has more Events
+     */
+    public boolean hasNext ();
 }
+

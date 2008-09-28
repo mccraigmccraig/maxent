@@ -1,3 +1,9 @@
+3.0.0
+-----
+Removed trove dependency.
+Changed license to ASL.
+Re-organized package structure to support upcomming work.
+
 2.5.1
 -----
 Fixed bugs with real-valued feature support.

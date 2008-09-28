@@ -1,31 +1,41 @@
-///////////////////////////////////////////////////////////////////////////////
-// Copyright (C) 2001 Jason Baldridge and Gann Bierner
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or (at your option) any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-//////////////////////////////////////////////////////////////////////////////   
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreemnets.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0 
+ * (the "License"); you may not use this file except in compliance with 
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package opennlp.maxent;
 
-import opennlp.maxent.io.*;
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
+
+import opennlp.maxent.io.SuffixSensitiveGISModelReader;
+import opennlp.maxent.io.SuffixSensitiveGISModelWriter;
+import opennlp.model.AbstractModel;
+import opennlp.model.Event;
+import opennlp.model.EventCollectorAsStream;
+import opennlp.model.EventStream;
+import opennlp.model.MaxentModel;
 
 /**
  * Trains or evaluates maxent components which have implemented the Evalable
  * interface.
  *
  * @author      Gann Bierner
- * @version     $Revision: 1.4 $, $Date: 2003/04/05 13:33:38 $
+ * @version     $Revision: 1.5 $, $Date: 2008/09/28 18:03:48 $
  */
 public class TrainEval {
     
@@ -123,7 +133,7 @@ public class TrainEval {
 	    MaxentModel m =
 		train(new EventCollectorAsStream(e.getEventCollector(datafr)),
 		      cutoff);
-	    new SuffixSensitiveGISModelWriter((GISModel)m,
+	    new SuffixSensitiveGISModelWriter((AbstractModel)m,
 					      new File(dir+stem)).persist();
 	}
 	else {

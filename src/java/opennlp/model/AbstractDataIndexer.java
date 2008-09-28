@@ -1,28 +1,27 @@
-///////////////////////////////////////////////////////////////////////////////
-//Copyright (C) 2003 Thomas Morton
-//
-//This library is free software; you can redistribute it and/or
-//modify it under the terms of the GNU Lesser General Public
-//License as published by the Free Software Foundation; either
-//version 2.1 of the License, or (at your option) any later version.
-//
-//This library is distributed in the hope that it will be useful,
-//but WITHOUT ANY WARRANTY; without even the implied warranty of
-//MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//GNU General Public License for more details.
-//
-//You should have received a copy of the GNU Lesser General Public
-//License along with this program; if not, write to the Free Software
-//Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-//////////////////////////////////////////////////////////////////////////////
-package opennlp.maxent;
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreemnets.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0 
+ * (the "License"); you may not use this file except in compliance with 
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-import gnu.trove.TObjectIntHashMap;
-import gnu.trove.TObjectIntProcedure;
+package opennlp.model;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+
 
 /**
  * Abstract class for collecting event and context counts used in training. 
@@ -30,6 +29,7 @@ import java.util.Set;
  */
 public abstract class AbstractDataIndexer implements DataIndexer {
 
+  private int numEvents;
   /** The integer contexts associated with each unique event. */ 
   protected int[][] contexts;
   /** The integer outcome associated with each unique event. */ 
@@ -70,37 +70,40 @@ public abstract class AbstractDataIndexer implements DataIndexer {
   }
 
   /**
-       * Sorts and uniques the array of comparable events and return the number of unique events.
-       * This method will alter the eventsToCompare array -- it does an in place
-       * sort, followed by an in place edit to remove duplicates.
-       *
-       * @param eventsToCompare a <code>ComparableEvent[]</code> value
-       * @return The number of unique events in the specified list.
-       * @since maxent 1.2.6
-       */
-  protected int sortAndMerge(List eventsToCompare) {
-    Collections.sort(eventsToCompare);
-    int numEvents = eventsToCompare.size();
-    int numUniqueEvents = 1; // assertion: eventsToCompare.length >= 1
-
-    if (numEvents <= 1) {
-      return numUniqueEvents; // nothing to do; edge case (see assertion)
-    }
-
-    ComparableEvent ce = (ComparableEvent) eventsToCompare.get(0);
-    for (int i = 1; i < numEvents; i++) {
-      ComparableEvent ce2 = (ComparableEvent) eventsToCompare.get(i);
-
-      if (ce.compareTo(ce2) == 0) {
-        ce.seen++; // increment the seen count
-        eventsToCompare.set(i, null); // kill the duplicate
+   * Sorts and uniques the array of comparable events and return the number of unique events.
+   * This method will alter the eventsToCompare array -- it does an in place
+   * sort, followed by an in place edit to remove duplicates.
+   *
+   * @param eventsToCompare a <code>ComparableEvent[]</code> value
+   * @return The number of unique events in the specified list.
+   * @since maxent 1.2.6
+   */
+  protected int sortAndMerge(List eventsToCompare, boolean sort) {
+    int numUniqueEvents = 1;
+    numEvents = eventsToCompare.size();
+    if (sort) {
+      Collections.sort(eventsToCompare);
+      if (numEvents <= 1) {
+        return numUniqueEvents; // nothing to do; edge case (see assertion)
       }
-      else {
-        ce = ce2; // a new champion emerges...
-        numUniqueEvents++; // increment the # of unique events
+
+      ComparableEvent ce = (ComparableEvent) eventsToCompare.get(0);
+      for (int i = 1; i < numEvents; i++) {
+        ComparableEvent ce2 = (ComparableEvent) eventsToCompare.get(i);
+
+        if (ce.compareTo(ce2) == 0) { 
+          ce.seen++; // increment the seen count
+          eventsToCompare.set(i, null); // kill the duplicate
+        }
+        else {
+          ce = ce2; // a new champion emerges...
+          numUniqueEvents++; // increment the # of unique events
+        }
       }
     }
-
+    else {
+      numUniqueEvents = eventsToCompare.size();
+    }
     System.out.println("done. Reduced " + numEvents + " events to " + numUniqueEvents + ".");
 
     contexts = new int[numUniqueEvents][];
@@ -120,6 +123,11 @@ public abstract class AbstractDataIndexer implements DataIndexer {
     return numUniqueEvents;
   }
   
+  
+  public int getNumEvents() {
+    return numEvents;
+  }
+  
   /**
    * Updates the set of predicated and counter with the specified event contexts and cutoff. 
    * @param ec The contexts/features which occur in a event.
@@ -127,10 +135,14 @@ public abstract class AbstractDataIndexer implements DataIndexer {
    * @param counter The predicate counters.
    * @param cutoff The cutoff which determines whether a predicate is included.
    */
-   protected static void update(String[] ec, Set predicateSet, TObjectIntHashMap counter, int cutoff) {
+   protected static void update(String[] ec, Set predicateSet, Map<String,Integer> counter, int cutoff) {
     for (int j=0; j<ec.length; j++) {
-      if (!counter.increment(ec[j])) {
+      Integer i = counter.get(ec[j]);
+      if (i == null) {
         counter.put(ec[j], 1);
+      }
+      else {
+        counter.put(ec[j], i+1);
       }
       if (!predicateSet.contains(ec[j]) && counter.get(ec[j]) >= cutoff) {
         predicateSet.add(ec[j]);
@@ -148,14 +160,11 @@ public abstract class AbstractDataIndexer implements DataIndexer {
    * @return a <code>String[]</code> value
    * @since maxent 1.2.6
    */
-  protected static String[] toIndexedStringArray(TObjectIntHashMap labelToIndexMap) {
+  protected static String[] toIndexedStringArray(Map<String,Integer> labelToIndexMap) {
     final String[] array = new String[labelToIndexMap.size()];
-    labelToIndexMap.forEachEntry(new TObjectIntProcedure() {
-      public boolean execute(Object str, int index) {
-        array[index] = (String)str;
-        return true;
-      }
-    });
+    for (String label : labelToIndexMap.keySet()) {
+      array[labelToIndexMap.get(label)] = label;
+    }
     return array;
   }
 

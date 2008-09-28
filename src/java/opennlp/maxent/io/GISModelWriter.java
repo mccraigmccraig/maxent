@@ -1,26 +1,31 @@
-///////////////////////////////////////////////////////////////////////////////
-// Copyright (C) 2001 Jason Baldridge and Gann Bierner
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or (at your option) any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-//////////////////////////////////////////////////////////////////////////////   
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreemnets.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0 
+ * (the "License"); you may not use this file except in compliance with 
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package opennlp.maxent.io;
 
-import opennlp.maxent.*;
-import gnu.trove.*;
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
+import opennlp.model.AbstractModel;
+import opennlp.model.ComparablePredicate;
+import opennlp.model.Context;
 
 /**
  * Abstract parent class for GISModel writers.  It provides the persist method
@@ -28,7 +33,7 @@ import java.util.*;
  * extending class to define precisely how the data should be stored.
  *
  * @author      Jason Baldridge
- * @version     $Revision: 1.7 $, $Date: 2006/11/09 20:58:19 $
+ * @version     $Revision: 1.8 $, $Date: 2008/09/28 18:04:29 $
  */
 public abstract class GISModelWriter {
     protected Context[] PARAMS;
@@ -37,23 +42,20 @@ public abstract class GISModelWriter {
     protected double CORRECTION_PARAM;
     protected String[] PRED_LABELS;
 
-    public GISModelWriter (GISModel model) {
+    public GISModelWriter (AbstractModel model) {
       
       Object[] data = model.getDataStructures();
       
       PARAMS = (Context[]) data[0];
-      TObjectIntHashMap pmap = (TObjectIntHashMap)data[1];
+      Map<String,Integer> pmap = (Map<String,Integer>)data[1];
       OUTCOME_LABELS = (String[])data[2];
       CORRECTION_CONSTANT = ((Integer)data[3]).intValue();
       CORRECTION_PARAM = ((Double)data[4]).doubleValue();
       
       PRED_LABELS = new String[pmap.size()];
-      pmap.forEachEntry(new TObjectIntProcedure() {
-        public boolean execute (Object pred, int index) {
-          PRED_LABELS[index] = (String)pred;
-          return true;
-        }
-      });
+      for (String pred : pmap.keySet()) {
+        PRED_LABELS[pmap.get(pred)] = pred;
+      }
     }
 
     protected abstract void writeUTF (String s) throws java.io.IOException;
